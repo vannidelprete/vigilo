@@ -54,7 +54,7 @@ Vigilo is an open source **edge AI predictive maintenance platform** for rotatin
 | Test bench | 3-pin PC fan (tachometer on pin 3) |
 | Tachometer pull-up | 10 kΩ resistor to 3.3V |
 | Gateway | Raspberry Pi 4 (2 GB+), 5.1V/3A USB-C PSU |
-| Gateway storage | MicroSD 16–32 GB, class A1/A2 |
+| Gateway storage | MicroSD 16-32 GB, class A1/A2 |
 
 > The test bench is a PC fan with a simulated mechanical imbalance. Vigilo is designed for any rotating machine with a sensor mounting point.
 
