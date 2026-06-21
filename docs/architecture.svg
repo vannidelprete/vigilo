@@ -1,0 +1,97 @@
+<svg viewBox="0 0 920 400" xmlns="http://www.w3.org/2000/svg" role="img"
+     font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif">
+  <title>Vigilo — Architecture</title>
+  <desc>Edge AI pipeline: ESP32 sensor node acquires vibrations and RPM, sends via MQTT to Raspberry Pi 4 gateway (Yocto Linux), which processes data and displays it on a local Grafana/InfluxDB dashboard.</desc>
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/>
+    </marker>
+    <clipPath id="c1"><rect x="15" y="20" width="215" height="330" rx="12"/></clipPath>
+    <clipPath id="c2"><rect x="330" y="20" width="240" height="330" rx="12"/></clipPath>
+    <clipPath id="c3"><rect x="675" y="20" width="215" height="330" rx="12"/></clipPath>
+  </defs>
+
+  <rect width="920" height="400" fill="#F8FAFC"/>
+
+  <!-- SENSOR NODE -->
+  <rect x="15" y="20" width="215" height="330" rx="12" fill="#FFFFFF" stroke="#F59E0B" stroke-width="2"/>
+  <rect x="15" y="20" width="215" height="14" fill="#F59E0B" clip-path="url(#c1)"/>
+  <text x="122" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#0F172A">Sensor Node</text>
+  <text x="122" y="68" text-anchor="middle" font-size="11" fill="#78716c">ESP32 DevKit</text>
+  <line x1="35" y1="79" x2="210" y2="79" stroke="#FDE68A" stroke-width="1"/>
+
+  <rect x="30" y="87" width="185" height="46" rx="8" fill="#FFFBEB" stroke="#FDE68A" stroke-width="1.5"/>
+  <text x="122" y="105" text-anchor="middle" font-size="12" font-weight="600" fill="#92400E">MPU6050</text>
+  <text x="122" y="121" text-anchor="middle" font-size="10" fill="#A16207">I2C 3-axis accelerometer</text>
+
+  <rect x="30" y="143" width="185" height="46" rx="8" fill="#FFFBEB" stroke="#FDE68A" stroke-width="1.5"/>
+  <text x="122" y="161" text-anchor="middle" font-size="12" font-weight="600" fill="#92400E">Tachometer</text>
+  <text x="122" y="177" text-anchor="middle" font-size="10" fill="#A16207">3-pin fan, RPM via interrupt</text>
+
+  <rect x="30" y="199" width="185" height="46" rx="8" fill="#FFFBEB" stroke="#FDE68A" stroke-width="1.5"/>
+  <text x="122" y="217" text-anchor="middle" font-size="12" font-weight="600" fill="#92400E">C/C++ Firmware</text>
+  <text x="122" y="233" text-anchor="middle" font-size="10" fill="#A16207">PlatformIO</text>
+
+  <rect x="30" y="255" width="185" height="46" rx="8" fill="#FFFBEB" stroke="#FDE68A" stroke-width="1.5"/>
+  <text x="122" y="273" text-anchor="middle" font-size="12" font-weight="600" fill="#92400E">WiFi 2.4 GHz</text>
+  <text x="122" y="289" text-anchor="middle" font-size="10" fill="#A16207">MQTT publisher</text>
+
+  <!-- GATEWAY -->
+  <rect x="330" y="20" width="240" height="330" rx="12" fill="#FFFFFF" stroke="#6366F1" stroke-width="2"/>
+  <rect x="330" y="20" width="240" height="14" fill="#6366F1" clip-path="url(#c2)"/>
+  <text x="450" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#0F172A">Gateway</text>
+  <text x="450" y="68" text-anchor="middle" font-size="11" fill="#78716c">Raspberry Pi 4 · Yocto Linux</text>
+  <line x1="350" y1="79" x2="550" y2="79" stroke="#C7D2FE" stroke-width="1"/>
+
+  <rect x="345" y="87" width="210" height="46" rx="8" fill="#EEF2FF" stroke="#C7D2FE" stroke-width="1.5"/>
+  <text x="450" y="105" text-anchor="middle" font-size="12" font-weight="600" fill="#3730A3">Mosquitto</text>
+  <text x="450" y="121" text-anchor="middle" font-size="10" fill="#4338CA">MQTT broker</text>
+
+  <rect x="345" y="143" width="210" height="46" rx="8" fill="#EEF2FF" stroke="#C7D2FE" stroke-width="1.5"/>
+  <text x="450" y="161" text-anchor="middle" font-size="12" font-weight="600" fill="#3730A3">Detection Engine</text>
+  <text x="450" y="177" text-anchor="middle" font-size="10" fill="#4338CA">FFT · anomaly detection</text>
+
+  <rect x="345" y="199" width="210" height="46" rx="8" fill="#EEF2FF" stroke="#C7D2FE" stroke-width="1.5"/>
+  <text x="450" y="217" text-anchor="middle" font-size="12" font-weight="600" fill="#3730A3">MQTT → DB Bridge</text>
+  <text x="450" y="233" text-anchor="middle" font-size="10" fill="#4338CA">Python · paho-mqtt</text>
+
+  <rect x="345" y="255" width="210" height="46" rx="8" fill="#EEF2FF" stroke="#C7D2FE" stroke-width="1.5"/>
+  <text x="450" y="273" text-anchor="middle" font-size="12" font-weight="600" fill="#3730A3">systemd · meta-vigilo</text>
+  <text x="450" y="289" text-anchor="middle" font-size="10" fill="#4338CA">custom Yocto layer</text>
+
+  <!-- DASHBOARD -->
+  <rect x="675" y="20" width="215" height="330" rx="12" fill="#FFFFFF" stroke="#0D9488" stroke-width="2"/>
+  <rect x="675" y="20" width="215" height="14" fill="#0D9488" clip-path="url(#c3)"/>
+  <text x="782" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#0F172A">Dashboard</text>
+  <text x="782" y="68" text-anchor="middle" font-size="11" fill="#78716c">local · Docker</text>
+  <line x1="695" y1="79" x2="870" y2="79" stroke="#99F6E4" stroke-width="1"/>
+
+  <rect x="690" y="87" width="185" height="46" rx="8" fill="#F0FDFA" stroke="#99F6E4" stroke-width="1.5"/>
+  <text x="782" y="105" text-anchor="middle" font-size="12" font-weight="600" fill="#115E59">InfluxDB</text>
+  <text x="782" y="121" text-anchor="middle" font-size="10" fill="#0F766E">time-series storage</text>
+
+  <rect x="690" y="143" width="185" height="46" rx="8" fill="#F0FDFA" stroke="#99F6E4" stroke-width="1.5"/>
+  <text x="782" y="161" text-anchor="middle" font-size="12" font-weight="600" fill="#115E59">Grafana</text>
+  <text x="782" y="177" text-anchor="middle" font-size="10" fill="#0F766E">real-time dashboard</text>
+
+  <rect x="690" y="199" width="185" height="46" rx="8" fill="#F0FDFA" stroke="#99F6E4" stroke-width="1.5"/>
+  <text x="782" y="217" text-anchor="middle" font-size="12" font-weight="600" fill="#115E59">Docker Compose</text>
+  <text x="782" y="233" text-anchor="middle" font-size="10" fill="#0F766E">containerization</text>
+
+  <rect x="690" y="255" width="185" height="46" rx="8" fill="#F0FDFA" stroke="#99F6E4" stroke-width="1.5"/>
+  <text x="782" y="273" text-anchor="middle" font-size="12" font-weight="600" fill="#115E59">Alert Engine</text>
+  <text x="782" y="289" text-anchor="middle" font-size="10" fill="#0F766E">thresholds · alerts</text>
+
+  <!-- ARROWS -->
+  <line x1="232" y1="185" x2="326" y2="185" stroke="#94a3b8" stroke-width="2.5" marker-end="url(#arr)"/>
+  <rect x="244" y="168" width="74" height="34" rx="6" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+  <text x="281" y="183" text-anchor="middle" font-size="10" font-weight="700" fill="#475569">MQTT</text>
+  <text x="281" y="196" text-anchor="middle" font-size="9" fill="#94a3b8">WiFi 2.4 GHz</text>
+
+  <line x1="572" y1="185" x2="671" y2="185" stroke="#94a3b8" stroke-width="2.5" marker-end="url(#arr)"/>
+  <rect x="584" y="168" width="74" height="34" rx="6" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+  <text x="621" y="183" text-anchor="middle" font-size="10" font-weight="700" fill="#475569">HTTP</text>
+  <text x="621" y="196" text-anchor="middle" font-size="9" fill="#94a3b8">local network</text>
+
+  <text x="460" y="385" text-anchor="middle" font-size="10" fill="#94a3b8">Zero cloud — the entire pipeline runs on the local network</text>
+</svg>

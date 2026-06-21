@@ -1,0 +1,43 @@
+# PlatformIO
+.pio/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+.pytest_cache/
+.mypy_cache/
+
+# ML / dataset / models
+ml/data/
+ml/checkpoints/
+ml/logs/
+*.tflite
+*.h5
+*.pkl
+*.npz
+
+# Docker — local runtime data
+dashboard/data/
+dashboard/grafana-storage/
+dashboard/influxdb-storage/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+.vscode/settings.json
+.idea/
