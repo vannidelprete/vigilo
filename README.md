@@ -6,7 +6,7 @@
 [![Status](https://img.shields.io/badge/status-in%20development-orange)]()
 [![Platform](https://img.shields.io/badge/platform-ESP32%20%2B%20RPi%204-blue)]()
 
-Vigilo is an open source **edge AI predictive maintenance platform** for rotating machines — motors, pumps, fans, compressors, actuators. The entire pipeline runs on the local network: from data acquisition to anomaly detection, from historical dashboards to alert generation. No cloud, no subscription, no data leaving the site.
+Vigilo is an open source **edge AI predictive maintenance platform** for rotating machines - motors, pumps, fans, compressors, actuators. The entire pipeline runs on the local network: from data acquisition to anomaly detection, from historical dashboards to alert generation. No cloud, no subscription, no data leaving the site.
 
 ## Architecture
 
@@ -69,10 +69,6 @@ vigilo/
 ```
 
 The custom Yocto layer for the gateway lives in a separate repository: [meta-vigilo](https://github.com/vannidelprete/meta-vigilo).
-
-## Getting started
-
-> In progress — documentation coming with Phase 2.
 
 ## License
 
