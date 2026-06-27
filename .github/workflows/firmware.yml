@@ -1,0 +1,34 @@
+name: Firmware
+
+on:
+  push:
+    paths:
+      - 'firmware/**'
+  pull_request:
+    paths:
+      - 'firmware/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install PlatformIO
+        run: pip install platformio
+      - name: Build firmware
+        run: platformio run
+        working-directory: firmware
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-bin
+          path: firmware/.pio/build/**/*.bin
