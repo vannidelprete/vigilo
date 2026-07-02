@@ -33,18 +33,6 @@ Vigilo is an open source **edge AI predictive maintenance platform** for rotatin
 | Containerization | Docker Compose |
 | ML (phase 5) | TensorFlow Lite Micro |
 
-## Roadmap
-
-| Phase | Description | Status |
-|---|---|---|
-| 0 | Scope, naming, repository structure | ✅ |
-| 1 | Domain study — vibration and mechanical fault theory | ✅ |
-| 2 | End-to-end data pipeline (sensor → MQTT → dashboard) | 🔄 |
-| 3 | Baseline anomaly detection (FFT, statistical thresholds) | ⬜ |
-| 4 | Custom Linux gateway (Yocto/Buildroot, Pi4 image) | ⬜ |
-| 5 | Edge ML model (TensorFlow Lite Micro) | ⬜ |
-| 6 | Packaging, documentation, demo | ⬜ |
-
 ## Hardware
 
 | Component | Specs |
@@ -69,6 +57,34 @@ vigilo/
 ```
 
 The custom Yocto layer for the gateway lives in a separate repository: [meta-vigilo](https://github.com/vannidelprete/meta-vigilo).
+
+## Development
+
+### Firmware
+
+Build (requires PlatformIO CLI or VS Code PlatformIO extension):
+
+```bash
+cd firmware
+pio run
+```
+
+Before building, copy firmware/include/README.md instructions to create your local firmware/include/secrets.h.
+
+### Running CI locally
+
+Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) and [act](https://nektosact.com/):
+
+```bash
+# firmware build check
+act push --workflows .github/workflows/firmware.yml
+
+# dashboard lint
+act push --workflows .github/workflows/dashboard.yml
+
+# ML lint + tests
+act push --workflows .github/workflows/ml.yml
+```
 
 ## License
 

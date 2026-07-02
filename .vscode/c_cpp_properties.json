@@ -227,6 +227,7 @@
                 "C:/Users/user/.platformio/packages/framework-arduinoespressif32/libraries/Preferences/src",
                 "C:/Users/user/.platformio/packages/framework-arduinoespressif32/libraries/RainMaker/src",
                 "C:/Users/user/.platformio/packages/framework-arduinoespressif32/libraries/SD/src",
+                "C:\\Users\\user\\Documents\\Progetti\\Vigilo\\vigilo\\firmware\\include",
                 "C:/Users/user/.platformio/packages/framework-arduinoespressif32/libraries/SD_MMC/src",
                 "C:/Users/user/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src",
                 "C:/Users/user/.platformio/packages/framework-arduinoespressif32/libraries/SPIFFS/src",
@@ -238,8 +239,7 @@
                 "C:/Users/user/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                 "C:/Users/user/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                 "C:/Users/user/.platformio/packages/framework-arduinoespressif32/libraries/WiFiProv/src",
-                "C:/Users/user/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
-                ""
+                "C:/Users/user/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src"
             ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
