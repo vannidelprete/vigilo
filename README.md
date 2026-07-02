@@ -76,6 +76,9 @@ Before building, copy firmware/include/README.md instructions to create your loc
 Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) and [act](https://nektosact.com/):
 
 ```bash
+# login if required
+docker login
+
 # firmware build check
 act push --workflows .github/workflows/firmware.yml
 
