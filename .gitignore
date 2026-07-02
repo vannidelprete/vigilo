@@ -1,6 +1,9 @@
 # PlatformIO
 .pio/
 
+# Local secrets
+firmware/include/secrets.h
+
 # Python
 __pycache__/
 *.py[cod]
