@@ -7,8 +7,9 @@
 
 #pragma once
 #include "ISensor.h"
+#include "hal/IWire.h"
+#include "hal/IMPU6050.h"
 #include <cstdint>
-#include <memory>
 
 namespace vigilo {
 
@@ -32,7 +33,7 @@ namespace vigilo {
      */
     class Imu : public ISensor {
     public:
-        /**
+         /**
          * @brief Result code returned by read().
          *
          * Distinguishes the failure cause so the caller can react appropriately.
@@ -50,16 +51,12 @@ namespace vigilo {
          * @param scl GPIO pin for I2C clock.
          * @param addr I2C device address (default 0x68, AD0 pin low). 
          */
-        explicit Imu(uint8_t sda, uint8_t scl, uint8_t addr);
-
-        /** @brief Destructor. Declared here to allow forward declaration of Impl. */
-        ~Imu() override;
+        explicit Imu(IWire& wire, IMPU6050& mpu, uint8_t addr = 0x68);
 
         Imu(const Imu&)                 = delete; // Non-copyable: each instance owns a unique hardware resource.
         Imu& operator=(const Imu&)      = delete; // Non-copyable: each instance owns a unique hardware resource.
-
-        Imu(Imu&&) noexcept             = default; // Move constructor: transfers Pimpl ownership to the new instance.
-        Imu& operator=(Imu&&) noexcept  = default; // Move constructor: transfers Pimpl ownership, leaving source in a valid empty state.
+        Imu(Imu&&)                      = delete; // Non-movable: holds non-rebindable references.
+        Imu& operator=(Imu&&)           = delete; // Non-movable: holds non-rebindable references.
 
         /** @copydoc ISensor::begin() */
         [[nodiscard]] InitResult begin() override;
@@ -75,8 +72,10 @@ namespace vigilo {
         [[nodiscard]] ReadResult read(ImuData& out) noexcept;
 
     private:
-        struct Impl;                    ///< Forward declaration of the implementation struct (Pimpl idiom).
-        std::unique_ptr<Impl> _impl;    ///< Pointer to the opaque implementation, allocated at construction.
+        IWire&    _wire;          ///< Injected I2C bus interface.
+        IMPU6050& _mpu;           ///< Injected MPU6050 chip interface.
+        uint8_t   _addr;          ///< I2C device address.
+        bool      _ready = false; ///< True after a successful begin() call.
     };
 
 } // namespace vigilo

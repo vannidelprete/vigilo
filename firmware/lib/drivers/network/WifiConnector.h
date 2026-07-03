@@ -6,24 +6,29 @@
  */
 
 #pragma once
+#include "hal/IWifi.h"
+#include "hal/IClock.h"
 #include "IConnector.h"
 
 namespace vigilo {
 
     /**
-     * @brief WiFi network connector using the ESP32 Arduino WiFi API.
+     * @brief Manages WiFi connectivity via injected HAL interfaces.
      *
-     * @warning Non-copyable and non-movable: holds raw C-string pointers
-     * whose lifetime must be managed by the caller.
+     * Attempts connection with up to 20 retries at 500 ms intervals.
+     * The IWifi and IClock dependencies are injected at construction,
+     * enabling full unit testing without hardware.
      */
     class WifiConnector : public IConnector {
     public:
         /**
-         * @brief Constructs the connector with the given credentials.
-         * @param ssid      Null-terminated WiFi network name.
-         * @param password  Null-terminated WiFi password.
+         * @brief Constructs the connector with the given credentials and HAL dependencies.
+         * @param ssid     Network name (null-terminated, lifetime must exceed this object).
+         * @param password Network password (null-terminated, lifetime must exceed this object).
+         * @param wifi     WiFi hardware interface.
+         * @param clock    Timing interface for retry delays.
          */
-        explicit WifiConnector(const char* ssid, const char* password);
+        explicit WifiConnector(const char* ssid, const char* password, IWifi& wifi, IClock& clock);
 
         WifiConnector(const WifiConnector&)            = delete; // Non-copyable: manages a unique network connection.
         WifiConnector& operator=(const WifiConnector&) = delete; // Non-copyable: manages a unique network connection.
@@ -37,8 +42,10 @@ namespace vigilo {
         [[nodiscard]] bool isConnected() const noexcept override;
 
     private:
-        const char* _ssid;     ///< Null-terminated WiFi network name.
-        const char* _password; ///< Null-terminated WiFi password.
+        const char* _ssid;     ///< Network SSID pointer (not owned).
+        const char* _password; ///< Network password pointer (not owned).
+        IWifi&      _wifi;     ///< Injected WiFi hardware interface.
+        IClock&     _clock;    ///< Injected timing interface.
     };
 
 } // namespace vigilo
