@@ -12,14 +12,14 @@ jobs:
   lint-and-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install ruff pytest numpy
+        run: pip install ruff pytest numpy --root-user-action=ignore
 
       - name: Lint
         run: ruff check ml/

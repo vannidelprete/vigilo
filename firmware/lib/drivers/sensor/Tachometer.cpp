@@ -6,21 +6,20 @@
  */
 
 #include "Tachometer.h"
-#include "config.h"
-#include <Arduino.h>
-#include <esp_attr.h>
+#include "hal/Platform.h"
 
 namespace vigilo {
 
     volatile uint32_t Tachometer::_pulseCount = 0;
 
-    Tachometer::Tachometer(uint8_t pin) : _pin(pin) {}
+    Tachometer::Tachometer(uint8_t pin, IClock& clock, IGpio& gpio, uint32_t intervalMs)
+    : _pin(pin), _clock(clock), _gpio(gpio), _intervalMs(intervalMs) {}
 
     InitResult Tachometer::begin() {
-        if (digitalPinToInterrupt(_pin) == NOT_AN_INTERRUPT) return InitResult::InvalidPin;
-        pinMode(_pin, INPUT_PULLUP);
-        attachInterrupt(digitalPinToInterrupt(_pin), isr, FALLING);
-        _lastMs = millis();
+        if (!_gpio.supportsInterrupt(_pin)) return InitResult::InvalidPin;
+        _gpio.pinMode(_pin, IGpio::PinMode::InputPullUp);
+        _gpio.attachInterrupt(_pin, isr, IGpio::Trigger::Falling);
+        _lastMs = _clock.millis();
         _ready  = true;
         return InitResult::Ok;
     }
@@ -31,25 +30,20 @@ namespace vigilo {
 
     float Tachometer::getRpm() noexcept {
         if (!_ready) return 0.0f;
-        
-        uint32_t now = millis();
-        if (now - _lastMs < config::RPM_INTERVAL_MS) {
-            return _rpm;
-        }
+
+        uint32_t now = _clock.millis();
+        if (now - _lastMs < _intervalMs) return _rpm;
 
         noInterrupts();
         uint32_t count = _pulseCount;
-        _pulseCount = 0;
+        _pulseCount    = 0;
         interrupts();
 
-        _rpm = (count / 2.0f) * 60.0f;
+        _rpm    = (count / 2.0f) * 60.0f;
         _lastMs = now;
-        
         return _rpm;
     }
 
-    void IRAM_ATTR Tachometer::isr() {
-        _pulseCount++;
-    }
+    void IRAM_ATTR Tachometer::isr() { _pulseCount = _pulseCount + 1; }
 
 } // namespace vigilo
