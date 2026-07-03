@@ -1,50 +1,75 @@
+/**
+ * @file main.cpp
+ * @brief Entry point - setup and loop orchestration only.
+ * @author Giovanni Del Prete (giovannidelprete95@gmail.com)
+ * @date 2026-07-03
+ */
+
 #include <Arduino.h>
-#include <WiFi.h>
-#include <MPU6050.h>
+#include "sensor/Imu.h"
+#include "sensor/Tachometer.h"
+#include "network/WifiConnector.h"
+#include "config.h"
 #include "secrets.h"
 
-#define LED_PIN 2
-#define I2C_SDA 21
-#define I2C_SCL 22
+namespace {
+    vigilo::Imu           imu(vigilo::config::PIN_SDA, vigilo::config::PIN_SCL, vigilo::config::IMU_ADDR);
+    vigilo::Tachometer    tacho(vigilo::config::PIN_TACHO);
+    vigilo::WifiConnector wifi(WIFI_SSID, WIFI_PASSWORD);
 
-MPU6050 imu;
-
-void connectWifi() {
-    Serial.printf("Connecting to %s", WIFI_SSID);
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
+    [[noreturn]] void halt(const char* msg) {
+        Serial.println(msg);
+        while (true) {
+            digitalWrite(vigilo::config::PIN_LED, !digitalRead(vigilo::config::PIN_LED));
+            delay(100);
+        }
     }
-    Serial.printf("\nConnected - IP: %s\n", WiFi.localIP().toString().c_str());
 }
 
 void setup() {
-    Serial.begin(115200);
-    pinMode(LED_PIN, OUTPUT);
+    Serial.begin(vigilo::config::BAUD_RATE);
+    pinMode(vigilo::config::PIN_LED, OUTPUT);
 
-    Wire.begin(I2C_SDA, I2C_SCL);
-    imu.initialize();
-
-    if (!imu.testConnection()) {
-        Serial.println("MPU6050 connection failed");
-        while (true) {}
+    switch (imu.begin()) {
+        case vigilo::InitResult::Ok:             break;
+        case vigilo::InitResult::DeviceNotFound: halt("IMU: device not found on I2C bus");
+        case vigilo::InitResult::BusError:       halt("IMU: I2C bus error during init");
+        case vigilo::InitResult::InvalidPin:     halt("IMU: invalid pin configuration");
     }
-    Serial.println("MPU6050 connected");
 
-    connectWifi();
+    switch (tacho.begin()) {
+        case vigilo::InitResult::Ok:             break;
+        case vigilo::InitResult::InvalidPin:     halt("Tachometer: pin does not support interrupts");
+        case vigilo::InitResult::DeviceNotFound: halt("Tachometer: unexpected error");
+        case vigilo::InitResult::BusError:       halt("Tachometer: unexpected error");
+    }
+
+    switch (wifi.connect()) {
+        case vigilo::ConnectResult::Ok:              Serial.println("WiFi connected"); break;
+        case vigilo::ConnectResult::NetworkNotFound: Serial.println("WiFi: network not found - continuing offline"); break;
+        case vigilo::ConnectResult::AuthFailed:      Serial.println("WiFi: auth failed - continuing offline"); break;
+        case vigilo::ConnectResult::Timeout:         Serial.println("WiFi: timeout - continuing offline"); break;
+        case vigilo::ConnectResult::HardwareError:   halt("WiFi: hardware failure");
+    }
 }
 
 void loop() {
-    int16_t ax, ay, az, gx, gy, gz;
-    imu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+    vigilo::ImuData data;
+    switch (imu.read(data)) {
+        case vigilo::Imu::ReadResult::Ok:
+            // TODO: publish data (task #31)
+            break;
+        case vigilo::Imu::ReadResult::NotReady:
+            Serial.println("IMU: not ready");
+            break;
+        case vigilo::Imu::ReadResult::BusError:
+            Serial.println("IMU: I2C bus error");
+            break;
+        case vigilo::Imu::ReadResult::DataError:
+            Serial.println("IMU: incomplete read");
+            break;
+    }
 
-    Serial.printf("ax=%d ay=%d az=%d | gx=%d gy=%d gz=%d\n",
-                  ax, ay, az, gx, gy, gz);
-
-    digitalWrite(LED_PIN, HIGH);
-    delay(500);
-    digitalWrite(LED_PIN, LOW);
-    delay(500);
+    float rpm = tacho.getRpm();
+    (void)rpm; // TODO: publish rpm (task #31)
 }
