@@ -73,17 +73,16 @@ void setup() {
 
 void loop() {
     vigilo::ImuData data;
+    digitalWrite(vigilo::config::PIN_LED, !digitalRead(vigilo::config::PIN_LED));
     switch (g_imu.read(data)) {
         case vigilo::Imu::ReadResult::Ok:        break;
         case vigilo::Imu::ReadResult::BusError:  Serial.println("IMU: bus error"); return;
         case vigilo::Imu::ReadResult::DataError: Serial.println("IMU: data error"); return;
         default:                                  return;
     }
-    Serial.printf("ax=%d ay=%d az=%d gx=%d gy=%d gz=%d\n",
-                  data.ax, data.ay, data.az, data.gx, data.gy, data.gz);
-
     float rpm = g_tacho.getRpm();
-    Serial.printf("rpm=%.1f\n", rpm);
+    Serial.printf("\rax=%6d ay=%6d az=%6d gx=%6d gy=%6d gz=%6d  rpm=%6.1f  ",
+                  data.ax, data.ay, data.az, data.gx, data.gy, data.gz, rpm);
 
     delay(100);
 }

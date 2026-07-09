@@ -46,6 +46,10 @@ Vigilo is an open source **edge AI predictive maintenance platform** for rotatin
 
 > The test bench is a PC fan with a simulated mechanical imbalance. Vigilo is designed for any rotating machine with a sensor mounting point.
 
+## Wiring
+
+![Wiring diagram](docs/scheme.svg)
+
 ## Repository structure
 
 ```
@@ -62,11 +66,27 @@ The custom Yocto layer for the gateway lives in a separate repository: [meta-vig
 
 ### Firmware
 
-Build (requires PlatformIO CLI or VS Code PlatformIO extension):
+Requirements: PlatformIO CLI or VS Code PlatformIO extension.
+
+Before building, create `firmware/include/secrets.h` (see `firmware/include/README.md`).
+
+Run unit tests (no hardware required):
 
 ```bash
 cd firmware
-pio run
+pio test -e native
+```
+
+Build and flash to device:
+
+```bash
+pio run -e esp32dev --target upload
+```
+
+Open serial monitor:
+
+```bash
+pio device monitor
 ```
 
 Before building, copy firmware/include/README.md instructions to create your local firmware/include/secrets.h.
