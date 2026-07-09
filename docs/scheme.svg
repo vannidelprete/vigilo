@@ -8,6 +8,8 @@
     .pin { font-size: 9px; fill: #666; }
   </style>
 
+  <rect width="740" height="460" fill="#ffffff"/>
+
   <!-- ESP32 -->
   <rect x="60" y="80" width="120" height="200" rx="6" fill="none" stroke="#4a90d9" stroke-width="2"/>
   <text x="120" y="72" text-anchor="middle" font-weight="bold" fill="#4a90d9">ESP32</text>
