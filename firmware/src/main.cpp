@@ -11,6 +11,8 @@
 #include "hal/ArduinoClock.h"
 #include "hal/ArduinoGpio.h"
 #include "hal/ArduinoWifi.h"
+#include "hal/ArduinoMqtt.h"
+#include "network/MqttPublisher.h"
 #include "sensor/Imu.h"
 #include "sensor/Tachometer.h"
 #include "network/WifiConnector.h"
@@ -24,10 +26,12 @@ namespace {
     vigilo::ArduinoWire    g_wire;
     vigilo::ArduinoMPU6050 g_mpu;
     vigilo::ArduinoWifi    g_wifi_hal;
+    vigilo::ArduinoMqtt    g_mqtt_hal;
 
     vigilo::Imu           g_imu(g_wire, g_mpu, vigilo::config::IMU_ADDR);
     vigilo::Tachometer    g_tacho(vigilo::config::PIN_TACHO, g_clock, g_gpio, vigilo::config::RPM_INTERVAL_MS);
     vigilo::WifiConnector g_wifi(WIFI_SSID, WIFI_PASSWORD, g_wifi_hal, g_clock);
+    vigilo::MqttPublisher g_publisher(MQTT_BROKER, vigilo::config::MQTT_PORT, vigilo::config::MQTT_DEVICE_ID, g_mqtt_hal);
 
     [[noreturn]] void halt(const char* msg) {
         Serial.println(msg);
@@ -68,12 +72,19 @@ void setup() {
         default:                                     halt("WiFi: unknown error");
     }
 
+    if (!g_publisher.connect())
+    {
+        halt("MQTT: connection failed");
+    }
+
     Serial.println("Vigilo ready.");
 }
 
 void loop() {
-    vigilo::ImuData data;
     digitalWrite(vigilo::config::PIN_LED, !digitalRead(vigilo::config::PIN_LED));
+    g_publisher.loop();
+
+    vigilo::ImuData data;
     switch (g_imu.read(data)) {
         case vigilo::Imu::ReadResult::Ok:        break;
         case vigilo::Imu::ReadResult::BusError:  Serial.println("IMU: bus error"); return;
@@ -83,6 +94,14 @@ void loop() {
     float rpm = g_tacho.getRpm();
     Serial.printf("\rax=%6d ay=%6d az=%6d gx=%6d gy=%6d gz=%6d  rpm=%6.1f  ",
                   data.ax, data.ay, data.az, data.gx, data.gy, data.gz, rpm);
+
+    const bool connected = g_publisher.isConnected();
+    const bool ok = connected ? g_publisher.publish(data, rpm) : g_publisher.connect();
+
+    if (!ok)
+    {
+        Serial.println(connected ? "MQTT: publish failed" : "MQTT: reconnect failed");
+    }
 
     delay(100);
 }

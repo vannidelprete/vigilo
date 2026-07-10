@@ -125,8 +125,3 @@ TEST_F(ImuTest, ReadPopulatesData) {
     EXPECT_EQ(data.gy,  -100);
     EXPECT_EQ(data.gz,     0);
 }
-
-int main(int argc, char** argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

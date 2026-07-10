@@ -10,3 +10,4 @@ Copy the template below and save it as `secrets.h` in this folder:
     
     #define WIFI_SSID "your_ssid_here"
     #define WIFI_PASSWORD "your_password_here"
+    #define MQTT_BROKER "your_broker_ip_here"
