@@ -86,8 +86,3 @@ TEST_F(TachometerTest, GetRpmReturnsCachedValueWithinInterval) {
     for (int i = 0; i < 10; ++i) Tachometer::isr();
     EXPECT_FLOAT_EQ(3000.0f, tacho.getRpm());
 }
-
-int main(int argc, char** argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

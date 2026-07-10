@@ -85,8 +85,3 @@ TEST_F(WifiConnectorTest, IsConnectedFalse) {
     EXPECT_CALL(wifi, status()).WillOnce(Return(IWifi::Status::Disconnected));
     EXPECT_FALSE(connector.isConnected());
 }
-
-int main(int argc, char** argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
