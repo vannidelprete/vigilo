@@ -20,14 +20,28 @@ public:
     MOCK_METHOD(void, loop,        (),                                   (noexcept, override));
 };
 
+class MockClock : public IClock {
+public:
+    MOCK_METHOD(uint32_t, millis, (), (const, noexcept, override));
+    MOCK_METHOD(void,     delay,  (uint32_t), (noexcept, override));
+};
+
 class MqttPublisherTest : public Test {
 protected:
-    static constexpr const char* BROKER    = "192.168.1.13";
-    static constexpr uint16_t    PORT      = 1883;
-    static constexpr const char* DEVICE_ID = "vigilo-01";
+    static constexpr const char* BROKER               = "192.168.1.13";
+    static constexpr uint16_t    PORT                 = 1883;
+    static constexpr const char* DEVICE_ID             = "vigilo-01";
+    static constexpr const char* EXPECTED_TOPIC        = "vigilo/vigilo-01/telemetry";
+    static constexpr uint32_t    RECONNECT_INTERVAL_MS = 5000;
 
     MockMqtt      mqtt;
-    MqttPublisher publisher{BROKER, PORT, DEVICE_ID, mqtt};
+    MockClock     clock;
+    MqttPublisher publisher{BROKER, PORT, DEVICE_ID, mqtt, clock, RECONNECT_INTERVAL_MS};
+
+    void SetUp() override {
+        ON_CALL(clock, millis()).WillByDefault(Return(0));
+        ON_CALL(mqtt, isConnected()).WillByDefault(Return(false));
+    }
 };
 
 TEST_F(MqttPublisherTest, ConnectPassesCredentialsToMqtt) {
@@ -41,9 +55,35 @@ TEST_F(MqttPublisherTest, ConnectReturnsFalseOnFailure) {
     ASSERT_FALSE(publisher.connect());
 }
 
+TEST_F(MqttPublisherTest, ConnectReturnsTrueWhenAlreadyConnected) {
+    EXPECT_CALL(mqtt, isConnected()).WillOnce(Return(true));
+    EXPECT_CALL(mqtt, connect(_, _, _)).Times(0);
+    ASSERT_TRUE(publisher.connect());
+}
+
+TEST_F(MqttPublisherTest, ConnectThrottlesSecondAttemptWithinInterval) {
+    EXPECT_CALL(clock, millis())
+        .WillOnce(Return(0))
+        .WillOnce(Return(RECONNECT_INTERVAL_MS - 1));
+    EXPECT_CALL(mqtt, connect(_, _, _)).Times(1).WillOnce(Return(true));
+
+    ASSERT_TRUE(publisher.connect());
+    ASSERT_FALSE(publisher.connect());
+}
+
+TEST_F(MqttPublisherTest, ConnectAttemptsAgainAfterIntervalElapsed) {
+    EXPECT_CALL(clock, millis())
+        .WillOnce(Return(0))
+        .WillOnce(Return(RECONNECT_INTERVAL_MS));
+    EXPECT_CALL(mqtt, connect(_, _, _)).Times(2).WillRepeatedly(Return(true));
+
+    ASSERT_TRUE(publisher.connect());
+    ASSERT_TRUE(publisher.connect());
+}
+
 TEST_F(MqttPublisherTest, PublishSendsCorrectTopic) {
     EXPECT_CALL(mqtt, isConnected()).WillOnce(Return(true));
-    EXPECT_CALL(mqtt, publish(StrEq("vigilo/vigilo-01/telemetry"), _))
+    EXPECT_CALL(mqtt, publish(StrEq(EXPECTED_TOPIC), _))
         .WillOnce(Return(true));
     ImuData data{0, 0, 0, 0, 0, 0};
     ASSERT_TRUE(publisher.publish(data, 0.0f));

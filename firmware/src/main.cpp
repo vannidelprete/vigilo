@@ -31,7 +31,8 @@ namespace {
     vigilo::Imu           g_imu(g_wire, g_mpu, vigilo::config::IMU_ADDR);
     vigilo::Tachometer    g_tacho(vigilo::config::PIN_TACHO, g_clock, g_gpio, vigilo::config::RPM_INTERVAL_MS);
     vigilo::WifiConnector g_wifi(WIFI_SSID, WIFI_PASSWORD, g_wifi_hal, g_clock);
-    vigilo::MqttPublisher g_publisher(MQTT_BROKER, vigilo::config::MQTT_PORT, vigilo::config::MQTT_DEVICE_ID, g_mqtt_hal);
+    vigilo::MqttPublisher g_publisher(MQTT_BROKER, vigilo::config::MQTT_PORT, vigilo::config::MQTT_DEVICE_ID,
+                                      g_mqtt_hal, g_clock, vigilo::config::MQTT_RECONNECT_INTERVAL_MS);
 
     [[noreturn]] void halt(const char* msg) {
         Serial.println(msg);
@@ -91,17 +92,15 @@ void loop() {
         case vigilo::Imu::ReadResult::DataError: Serial.println("IMU: data error"); return;
         default:                                  return;
     }
-    float rpm = g_tacho.getRpm();
-    Serial.printf("\rax=%6d ay=%6d az=%6d gx=%6d gy=%6d gz=%6d  rpm=%6.1f  ",
-                  data.ax, data.ay, data.az, data.gx, data.gy, data.gz, rpm);
+        float rpm = g_tacho.getRpm();
 
     const bool connected = g_publisher.isConnected();
     const bool ok = connected ? g_publisher.publish(data, rpm) : g_publisher.connect();
+    const char* mqttStatus = ok ? (connected ? "publish ok" : "reconnected")
+                                 : (connected ? "publish failed" : "reconnecting");
 
-    if (!ok)
-    {
-        Serial.println(connected ? "MQTT: publish failed" : "MQTT: reconnect failed");
-    }
+    Serial.printf("\rax=%6d ay=%6d az=%6d gx=%6d gy=%6d gz=%6d  rpm=%6.1f  mqtt=%-15s",
+                  data.ax, data.ay, data.az, data.gx, data.gy, data.gz, rpm, mqttStatus);
 
     delay(100);
 }

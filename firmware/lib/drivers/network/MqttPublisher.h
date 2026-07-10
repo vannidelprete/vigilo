@@ -7,6 +7,7 @@
 
 #pragma once
 #include "hal/IMqtt.h"
+#include "hal/IClock.h"
 #include "sensor/Imu.h"
 #include <cstdint>
 
@@ -27,13 +28,16 @@ namespace vigilo {
     public:
         /**
          * @brief Constructs the publisher and pre-formats the topic string.
-         * @param broker   Broker hostname or IP address. Must outlive this object.
-         * @param port     Broker TCP port.
-         * @param deviceId Unique device identifier used as the MQTT client ID and
-         *                 embedded in the topic. Must outlive this object.
-         * @param mqtt     Injected MQTT interface.
+         * @param broker                Broker hostname or IP address. Must outlive this object.
+         * @param port                  Broker TCP port.
+         * @param deviceId              Unique device identifier used as the MQTT client ID and
+         *                              embedded in the topic. Must outlive this object.
+         * @param mqtt                  Injected MQTT interface.
+         * @param clock                 Injected timing interface, used to throttle reconnect attempts.
+         * @param reconnectIntervalMs   Minimum time between reconnect() attempts, in 
          */
-        explicit MqttPublisher(const char* broker, uint16_t port, const char* deviceId, IMqtt& mqtt);
+        explicit MqttPublisher(const char* broker, uint16_t port, const char* deviceId, IMqtt& mqtt,
+                               IClock& clock, uint32_t reconnectIntervalMs);
 
         MqttPublisher(const MqttPublisher&)            = delete; ///< Non-copyable.
         MqttPublisher& operator=(const MqttPublisher&) = delete; ///< Non-copyable.
@@ -41,8 +45,16 @@ namespace vigilo {
         MqttPublisher& operator=(MqttPublisher&&)      = delete; ///< Non-movable.
 
         /**
-         * @brief Connects to the MQTT broker.
-         * @return true on success, false on failure.
+         * @brief Connects to the MQTT broker, or attempts to restore the connection.
+         *
+         * Returns true immediately without attempting when already connected.
+         * The first call ever made always attempts immediately, regardless of
+         * elapsed time. Later calls while disconnected are throttled: they
+         * return false without attempting if called again before
+         * reconnectIntervalMs has elapsed since the last attempt.
+         *
+         * @return true if connected (already, or as a result of this call),
+         *         false if disconnected and no attempt was made or the attempt failed.
          */
         [[nodiscard]] bool connect();
 
@@ -80,6 +92,10 @@ namespace vigilo {
         uint16_t    _port;                      ///< Broker TCP port.
         const char* _deviceId;                  ///< Device identifier pointer (not owned).
         IMqtt&      _mqtt;                      ///< Injected MQTT interface.
+        IClock&     _clock;                     ///< Injected timing interface.
+        uint32_t    _reconnectIntervalMs;       ///< Minimum interval between attempts after the first.
+        uint32_t    _lastAttemptMs = 0;         ///< Timestamp of the last connect() attempt.
+        bool        _hasAttempted  = false;     ///< True once connect() has been called at least once.
         char        _topic[TOPIC_CAPACITY];     ///< Pre-formatted topic: `vigilo/<deviceId>/telemetry`.
         char        _payload[PAYLOAD_CAPACITY]; ///< Reusable JSON payload buffer.
     };

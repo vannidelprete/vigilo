@@ -16,15 +16,24 @@ namespace {
 
 namespace vigilo {
     
-    MqttPublisher::MqttPublisher(const char* broker, uint16_t port, const char* deviceId, IMqtt& mqtt)
-        : _broker(broker), _port(port), _deviceId(deviceId), _mqtt(mqtt)
+    MqttPublisher::MqttPublisher(const char* broker, uint16_t port, const char* deviceId,
+                                  IMqtt& mqtt, IClock& clock, uint32_t reconnectIntervalMs)
+        : _broker(broker), _port(port), _deviceId(deviceId),
+          _mqtt(mqtt), _clock(clock), _reconnectIntervalMs(reconnectIntervalMs)
     {
         snprintf(_topic, sizeof(_topic), TOPIC_FORMAT, _deviceId);
     }
 
     bool MqttPublisher::connect() {
-        return _mqtt.connect(_deviceId, _broker, _port);
-    }
+    if (_mqtt.isConnected()) return true;
+
+    const uint32_t now = _clock.millis();
+    if (_hasAttempted && (now - _lastAttemptMs < _reconnectIntervalMs)) return false;
+
+    _hasAttempted  = true;
+    _lastAttemptMs = now;
+    return _mqtt.connect(_deviceId, _broker, _port);
+}
 
     bool MqttPublisher::isConnected() const noexcept {
         return _mqtt.isConnected();
