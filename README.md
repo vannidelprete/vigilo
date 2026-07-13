@@ -91,6 +91,37 @@ pio device monitor
 
 Before building, copy firmware/include/README.md instructions to create your local firmware/include/secrets.h.
 
+### Dashboard
+
+Requirements: [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker Engine + Compose plugin on Linux) and [mkcert](https://github.com/FiloSottile/mkcert) for local HTTPS certificates.
+
+Copy `dashboard/.env.example` to `dashboard/.env` and fill in your own credentials.
+
+Generate a local TLS certificate (one-time; replace the IP with your machine's LAN address):
+
+```bash
+mkcert -install
+cd dashboard
+mkdir certs
+mkcert -cert-file certs/cert.pem -key-file certs/key.pem localhost 127.0.0.1 192.168.1.13
+```
+
+Start InfluxDB and Grafana:
+
+```bash
+cd dashboard
+docker compose up -d
+```
+
+InfluxDB: https://localhost:8086
+Grafana: https://localhost:3000
+
+Stop the containers (data persists in dashboard/influxdb-storage/ and dashboard/grafana-storage/):
+
+```bash
+docker compose down
+```
+
 ### Running CI locally
 
 Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) and [act](https://nektosact.com/):

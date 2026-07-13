@@ -29,6 +29,7 @@ ml/logs/
 dashboard/data/
 dashboard/grafana-storage/
 dashboard/influxdb-storage/
+dashboard/certs/
 
 # Environment
 .env
