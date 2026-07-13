@@ -39,3 +39,20 @@ services:
     depends_on:
       influxdb:
         condition: service_healthy
+
+  bridge:
+    build: ./bridge
+    restart: unless-stopped
+    environment:
+      MQTT_BROKER: ${MQTT_BROKER:-host.docker.internal}
+      MQTT_PORT: ${MQTT_PORT:-1883}
+      MQTT_TOPIC: ${MQTT_TOPIC:-vigilo/+/telemetry}
+      INFLUXDB_URL: https://influxdb:8086
+      INFLUXDB_TOKEN: ${INFLUXDB_ADMIN_TOKEN:-changeme-token}
+      INFLUXDB_ORG: ${INFLUXDB_ORG:-vigilo}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET:-telemetry}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      influxdb:
+        condition: service_healthy
