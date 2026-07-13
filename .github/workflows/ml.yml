@@ -25,4 +25,4 @@ jobs:
         run: ruff check ml/
 
       - name: Test
-        run: pytest ml/ -v
+        run: pytest ml/ -v || [ $? -eq 5 ]
