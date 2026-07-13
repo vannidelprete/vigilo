@@ -122,6 +122,25 @@ Stop the containers (data persists in dashboard/influxdb-storage/ and dashboard/
 docker compose down
 ```
 
+### ML
+
+Requirements: Python 3.11+.
+
+```bash
+cd ml
+python -m venv .venv
+.venv\Scripts\Activate.ps1  # Windows
+pip install -r requirements.txt
+```
+
+Copy ml/.env.example to ml/.env and fill in your InfluxDB credentials (same values as dashboard/.env, but with INFLUXDB_URL=https://localhost:8086 since this runs on the host, not in Docker).
+
+Collect a baseline dataset (let the fan run under normal conditions first):
+
+```bash
+python collect_baseline.py --minutes 15
+```
+
 ### Running CI locally
 
 Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) and [act](https://nektosact.com/):
