@@ -106,7 +106,7 @@ mkdir certs
 mkcert -cert-file certs/cert.pem -key-file certs/key.pem localhost 127.0.0.1 192.168.1.13
 ```
 
-Start InfluxDB and Grafana:
+Start InfluxDB, Grafana, and the MQTT bridge:
 
 ```bash
 cd dashboard
