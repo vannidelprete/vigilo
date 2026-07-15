@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import os
+import struct
 
 import paho.mqtt.client as mqtt
 from influxdb_client import InfluxDBClient, Point
@@ -16,7 +16,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("vigilo-bridge")
 
-REQUIRED_FIELDS = ("ax", "ay", "az", "gx", "gy", "gz", "rpm")
+BATCH_HEADER_FORMAT = "<IHf"
+BATCH_HEADER_SIZE = struct.calcsize(BATCH_HEADER_FORMAT)
 
 class Bridge:
     def __init__(
@@ -66,26 +67,38 @@ class Bridge:
 
     def _on_message(self, client, userdata, msg: mqtt.MQTTMessage) -> None:
         parts = msg.topic.split("/")
-        if len(parts) != 3:
+        if len(parts) < 2:
             logger.warning("Unexpected topic format: %s", msg.topic)
             return
         
         device_id = parts[1]
 
-        try:
-            payload = json.loads(msg.payload)
-        except json.JSONDecodeError:
-            logger.warning("Invalid JSON on %s: %r", msg.topic, msg.payload)
-            return
-        
-        if not all(field in payload for field in REQUIRED_FIELDS):
-            logger.warning("Missing fields on %s: %r", msg.topic, payload)
-            return
-        
-        point = Point("telemetry").tag("device_id", device_id)
-        for field in REQUIRED_FIELDS:
-            point = point.field(field, payload[field])
+        if msg.topic.endswith("/telemetry/batch"):
+            self._handle_batch(device_id, msg.payload)
+        elif msg.topic.endswith("/status"):
+            self._handle_status(device_id, msg.payload)
+        else:
+            logger.debug("Ignoring unhandled topic: %s", msg.topic)
 
+    def _handle_batch(self, device_id: str, payload: bytes) -> None:
+        if len(payload) < BATCH_HEADER_SIZE:
+            logger.warning("Batch payload too short from %s: %d bytes", device_id, len(payload))
+            return
+        
+        sample_interval_us, sample_count, rpm = struct.unpack(BATCH_HEADER_FORMAT, payload[:BATCH_HEADER_SIZE])
+
+        point = (
+            Point("telemetry")
+            .tag("device_id", device_id)
+            .field("rpm", rpm)
+            .field("sample_count", sample_count)
+            .field("sample_interval_us", sample_interval_us)
+        )
+        self._write_api.write(bucket=self._bucket, record=point)
+
+    def _handle_status(self, device_id: str, payload: bytes) -> None:
+        online = payload.decode("utf-8", errors="replace") == "online"
+        point = Point("status").tag("device_id", device_id).field("online_flag", 1 if online else 0)
         self._write_api.write(bucket=self._bucket, record=point)
 
 def main() -> None:

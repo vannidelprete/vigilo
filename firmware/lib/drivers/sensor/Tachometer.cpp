@@ -31,15 +31,16 @@ namespace vigilo {
     float Tachometer::getRpm() noexcept {
         if (!_ready) return 0.0f;
 
-        uint32_t now = _clock.millis();
-        if (now - _lastMs < _intervalMs) return _rpm;
+        const uint32_t now = _clock.millis();
+        const uint32_t elapsedMs = now - _lastMs;
+        if (elapsedMs < _intervalMs) return _rpm;
 
         noInterrupts();
         uint32_t count = _pulseCount;
         _pulseCount    = 0;
         interrupts();
 
-        _rpm    = (count / 2.0f) * 60.0f;
+        _rpm    = (count / 2.0f) * (60000.0f / elapsedMs);
         _lastMs = now;
         return _rpm;
     }

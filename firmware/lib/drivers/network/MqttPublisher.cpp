@@ -7,12 +7,15 @@
 
 #include "network/MqttPublisher.h"
 #include <cstdio>
+#include <cstring>
 
 namespace {
-    constexpr const char* TOPIC_FORMAT   = "vigilo/%s/telemetry";
-    constexpr const char* PAYLOAD_FORMAT =
-        "{\"ax\":%d,\"ay\":%d,\"az\":%d,\"gx\":%d,\"gy\":%d,\"gz\":%d,\"rpm\":%.1f}";
+    constexpr const char* STATUS_TOPIC_FORMAT = "vigilo/%s/status";
+    constexpr const char* BATCH_TOPIC_FORMAT  = "vigilo/%s/telemetry/batch";
+    constexpr const char* WILL_MESSAGE        = "offline";
+    constexpr const char* ONLINE_MESSAGE      = "online";
 } // namespace
+
 
 namespace vigilo {
     
@@ -21,7 +24,8 @@ namespace vigilo {
         : _broker(broker), _port(port), _deviceId(deviceId),
           _mqtt(mqtt), _clock(clock), _reconnectIntervalMs(reconnectIntervalMs)
     {
-        snprintf(_topic, sizeof(_topic), TOPIC_FORMAT, _deviceId);
+        snprintf(_statusTopic, sizeof(_statusTopic), STATUS_TOPIC_FORMAT, _deviceId);
+        snprintf(_batchTopic, sizeof(_batchTopic), BATCH_TOPIC_FORMAT, _deviceId);
     }
 
     bool MqttPublisher::connect() {
@@ -32,19 +36,30 @@ namespace vigilo {
 
     _hasAttempted  = true;
     _lastAttemptMs = now;
-    return _mqtt.connect(_deviceId, _broker, _port);
+
+    if (!_mqtt.connect(_deviceId, _broker, _port, _statusTopic, WILL_MESSAGE)) return false;
+
+    (void)_mqtt.publish(_statusTopic, ONLINE_MESSAGE, true);
+    return true;
 }
 
     bool MqttPublisher::isConnected() const noexcept {
         return _mqtt.isConnected();
     }
 
-    bool MqttPublisher::publish(const ImuData& data, float rpm) {
+    bool MqttPublisher::publishBatch(const ImuData* samples, std::size_t sampleCount,
+                                     uint32_t sampleIntervalUs, float rpm) {
         if (!_mqtt.isConnected()) return false;
 
-        snprintf(_payload, sizeof(_payload), PAYLOAD_FORMAT,
-                 data.ax, data.ay, data.az, data.gx, data.gy, data.gz, rpm);
-        return _mqtt.publish(_topic, _payload);
+        const std::size_t dataBytes = sampleCount * sizeof(ImuData);
+        const std::size_t totalBytes = sizeof(BatchHeader) + dataBytes;
+        if (totalBytes > sizeof(_batchPayload)) return false;
+
+        const BatchHeader header{sampleIntervalUs, static_cast<uint16_t>(sampleCount), rpm};
+        std::memcpy(_batchPayload, &header, sizeof(BatchHeader));
+        std::memcpy(_batchPayload + sizeof(BatchHeader), samples, dataBytes);
+
+        return _mqtt.publishBinary(_batchTopic, _batchPayload, totalBytes);
     }
 
     void MqttPublisher::loop() noexcept {
