@@ -17,8 +17,14 @@ namespace vigilo {
         /** @copydoc IClock::millis() */
         uint32_t millis() const noexcept override { return ::millis(); }
 
-        /** @copydoc IClock::delay() */
-        void delay(uint32_t ms) noexcept override { ::delay(ms); }
+        /** @copydoc IClock::delayMillis() */
+        void delayMillis(uint32_t ms) noexcept override { ::delay(ms); }
+
+        /** @copydoc IClock::micros() */
+        uint32_t micros() const noexcept override { return ::micros(); }
+
+        /** @copydoc IClock::delayMicros() */
+        void delayMicros(uint32_t us) noexcept override { ::delayMicroseconds(us); }
     };
 
 } // namespace vigilo

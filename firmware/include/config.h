@@ -23,5 +23,12 @@ namespace vigilo {
         constexpr uint16_t      MQTT_PORT                   = 1883;         ///< MQTT broker TCP port.
         constexpr const char*   MQTT_DEVICE_ID              = "vigilo-01";  ///< Unique device identifier used as. 
         constexpr uint32_t      MQTT_RECONNECT_INTERVAL_MS  = 5000UL;       ///< Minimum interval between MQTT reconnect attempts.   
+
+        constexpr uint32_t      I2C_CLOCK_HZ                = 400000UL;     ///< I2C Fast Mode clock speed for high-rate IMU batch sampling.
+        constexpr uint32_t      IMU_SAMPLE_INTERVAL_US      = 2000UL;       ///< Target interval between batch samples (500 Hz).
+        constexpr uint32_t      BATCH_INTERVAL_MS           = 30000UL;      ///< Period between batch capture cycles.
+        constexpr uint16_t      MQTT_BUFFER_SIZE            = 4096;         ///< PubSubClient buffer size, sized for a full batch payload.
+
     } // namespace config
+
 } // namespace vigilo

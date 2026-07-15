@@ -8,26 +8,13 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "sensor/Imu.h"
+#include "../mocks/MockWire.h"
+#include "../mocks/MockMPU6050.h"
 
 using namespace vigilo;
 using ::testing::Return;
 using ::testing::InSequence;
 using ::testing::_;
-
-class MockWire : public IWire {
-public:
-    MOCK_METHOD(void,    beginTransmission, (uint8_t),           (override));
-    MOCK_METHOD(void,    write,             (uint8_t),           (override));
-    MOCK_METHOD(uint8_t, endTransmission,   (bool),              (override));
-    MOCK_METHOD(uint8_t, requestFrom,       (uint8_t, uint8_t),  (override));
-    MOCK_METHOD(int,     read,              (),                  (override));
-};
-
-class MockMPU6050 : public IMPU6050 {
-public:
-    MOCK_METHOD(void, initialize,     (), (override));
-    MOCK_METHOD(bool, testConnection, (), (override));
-};
 
 class ImuTest : public ::testing::Test {
 protected:

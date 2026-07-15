@@ -13,8 +13,8 @@ namespace vigilo {
     /**
      * @brief Abstract interface for millisecond-resolution timing.
      *
-     * Wraps millis() and delay() so drivers are decoupled from the
-     * Arduino runtime and can be tested on the host.
+     * Wraps millis()/delay() and micros()/delayMicroseconds() so drivers are
+     * decoupled from the Arduino runtime and can be tested on the host.
      */
     class IClock {
     public:
@@ -28,7 +28,19 @@ namespace vigilo {
          * @brief Blocks for the given number of milliseconds.
          * @param ms Duration in milliseconds.
          */
-        virtual void delay(uint32_t ms) noexcept = 0;
+        virtual void delayMillis(uint32_t ms) noexcept = 0;
+
+        /**
+         * @brief Returns microseconds elapsed since boot.
+         * @return uint32_t Microseconds since power-on.
+         */
+        [[nodiscard]] virtual uint32_t micros() const noexcept = 0;
+
+        /**
+         * @brief Blocks for the given number of microseconds.
+         * @param us Duration in microseconds.
+         */
+        virtual void delayMicros(uint32_t us) noexcept = 0;
 
         /** @brief Virtual destructor. */
         virtual ~IClock() = default;

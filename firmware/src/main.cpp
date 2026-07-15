@@ -14,6 +14,7 @@
 #include "hal/ArduinoMqtt.h"
 #include "network/MqttPublisher.h"
 #include "sensor/Imu.h"
+#include "sensor/ImuBatchSampler.h"
 #include "sensor/Tachometer.h"
 #include "network/WifiConnector.h"
 #include "config.h"
@@ -21,18 +22,21 @@
 
 namespace {
 
-    vigilo::ArduinoClock   g_clock;
-    vigilo::ArduinoGpio    g_gpio;
-    vigilo::ArduinoWire    g_wire;
-    vigilo::ArduinoMPU6050 g_mpu;
-    vigilo::ArduinoWifi    g_wifi_hal;
-    vigilo::ArduinoMqtt    g_mqtt_hal;
+    vigilo::ArduinoClock        g_clock;
+    vigilo::ArduinoGpio         g_gpio;
+    vigilo::ArduinoWire         g_wire;
+    vigilo::ArduinoMPU6050      g_mpu;
+    vigilo::ArduinoWifi         g_wifi_hal;
+    vigilo::ArduinoMqtt         g_mqtt_hal(vigilo::config::MQTT_BUFFER_SIZE);
 
-    vigilo::Imu           g_imu(g_wire, g_mpu, vigilo::config::IMU_ADDR);
-    vigilo::Tachometer    g_tacho(vigilo::config::PIN_TACHO, g_clock, g_gpio, vigilo::config::RPM_INTERVAL_MS);
-    vigilo::WifiConnector g_wifi(WIFI_SSID, WIFI_PASSWORD, g_wifi_hal, g_clock);
-    vigilo::MqttPublisher g_publisher(MQTT_BROKER, vigilo::config::MQTT_PORT, vigilo::config::MQTT_DEVICE_ID,
-                                      g_mqtt_hal, g_clock, vigilo::config::MQTT_RECONNECT_INTERVAL_MS);
+    vigilo::Imu                 g_imu(g_wire, g_mpu, vigilo::config::IMU_ADDR);
+    vigilo::ImuBatchSampler     g_batchSampler(g_imu, g_clock, vigilo::config::IMU_SAMPLE_INTERVAL_US);
+    vigilo::Tachometer          g_tacho(vigilo::config::PIN_TACHO, g_clock, g_gpio, vigilo::config::RPM_INTERVAL_MS);
+    vigilo::WifiConnector       g_wifi(WIFI_SSID, WIFI_PASSWORD, g_wifi_hal, g_clock);
+    vigilo::MqttPublisher       g_publisher(MQTT_BROKER, vigilo::config::MQTT_PORT, vigilo::config::MQTT_DEVICE_ID,
+                                            g_mqtt_hal, g_clock, vigilo::config::MQTT_RECONNECT_INTERVAL_MS);
+
+    uint32_t g_lastBatchMs = 0;
 
     [[noreturn]] void halt(const char* msg) {
         Serial.println(msg);
@@ -50,7 +54,7 @@ void setup() {
     Serial.begin(vigilo::config::BAUD_RATE);
     pinMode(vigilo::config::PIN_LED, OUTPUT);
 
-    Wire.begin(vigilo::config::PIN_SDA, vigilo::config::PIN_SCL);
+    Wire.begin(vigilo::config::PIN_SDA, vigilo::config::PIN_SCL, vigilo::config::I2C_CLOCK_HZ);
 
     switch (g_imu.begin()) {
         case vigilo::InitResult::Ok:            break;
@@ -75,7 +79,7 @@ void setup() {
 
     if (!g_publisher.connect())
     {
-        halt("MQTT: connection failed");
+        Serial.println("MQTT: initial connection failed, retrying in the background");
     }
 
     Serial.println("Vigilo ready.");
@@ -84,23 +88,19 @@ void setup() {
 void loop() {
     digitalWrite(vigilo::config::PIN_LED, !digitalRead(vigilo::config::PIN_LED));
     g_publisher.loop();
+    (void)g_publisher.connect();
 
-    vigilo::ImuData data;
-    switch (g_imu.read(data)) {
-        case vigilo::Imu::ReadResult::Ok:        break;
-        case vigilo::Imu::ReadResult::BusError:  Serial.println("IMU: bus error"); return;
-        case vigilo::Imu::ReadResult::DataError: Serial.println("IMU: data error"); return;
-        default:                                  return;
+    const uint32_t now = g_clock.millis();
+    if ((now - g_lastBatchMs) >= vigilo::config::BATCH_INTERVAL_MS) {
+        g_lastBatchMs = now;
+
+        const std::size_t collected = g_batchSampler.collectBatch();
+        const bool published = g_publisher.publishBatch(g_batchSampler.data(), collected, 
+                                                        vigilo::config::IMU_SAMPLE_INTERVAL_US, g_tacho.getRpm());
+        
+        Serial.printf("batch: collected=%3u published=%s\n",
+                      static_cast<unsigned>(collected), published ? "ok": "failed");
     }
-        float rpm = g_tacho.getRpm();
-
-    const bool connected = g_publisher.isConnected();
-    const bool ok = connected ? g_publisher.publish(data, rpm) : g_publisher.connect();
-    const char* mqttStatus = ok ? (connected ? "publish ok" : "reconnected")
-                                 : (connected ? "publish failed" : "reconnecting");
-
-    Serial.printf("\rax=%6d ay=%6d az=%6d gx=%6d gy=%6d gz=%6d  rpm=%6.1f  mqtt=%-15s",
-                  data.ax, data.ay, data.az, data.gx, data.gy, data.gz, rpm, mqttStatus);
 
     delay(100);
 }

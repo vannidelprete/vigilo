@@ -8,23 +8,13 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "network/WifiConnector.h"
+#include "../mocks/MockWifi.h"
+#include "../mocks/MockClock.h"
 
 using namespace vigilo;
 using ::testing::Return;
 using ::testing::StrEq;
 using ::testing::_;
-
-class MockWifi : public IWifi {
-public:
-    MOCK_METHOD(void,   begin,  (const char*, const char*), (override));
-    MOCK_METHOD(Status, status, (),                         (override));
-};
-
-class MockClock : public IClock {
-public:
-    MOCK_METHOD(uint32_t, millis, (), (const, noexcept, override));
-    MOCK_METHOD(void,     delay,  (uint32_t), (noexcept, override));
-};
 
 class WifiConnectorTest : public ::testing::Test {
 protected:
@@ -36,7 +26,7 @@ protected:
 TEST_F(WifiConnectorTest, ConnectOk) {
     EXPECT_CALL(wifi, begin(StrEq("test-ssid"), StrEq("test-pass")));
     EXPECT_CALL(wifi, status()).WillRepeatedly(Return(IWifi::Status::Connected));
-    EXPECT_CALL(clock, delay(_)).Times(0);
+    EXPECT_CALL(clock, delayMillis(_)).Times(0);
 
     EXPECT_EQ(connector.connect(), ConnectResult::Ok);
 }
@@ -47,7 +37,7 @@ TEST_F(WifiConnectorTest, ConnectOkAfterRetries) {
         .WillOnce(Return(IWifi::Status::Disconnected))
         .WillOnce(Return(IWifi::Status::Disconnected))
         .WillRepeatedly(Return(IWifi::Status::Connected));
-    EXPECT_CALL(clock, delay(500)).Times(2);
+    EXPECT_CALL(clock, delayMillis(500)).Times(2);
 
     EXPECT_EQ(connector.connect(), ConnectResult::Ok);
 }
@@ -55,7 +45,7 @@ TEST_F(WifiConnectorTest, ConnectOkAfterRetries) {
 TEST_F(WifiConnectorTest, ConnectNetworkNotFound) {
     EXPECT_CALL(wifi, begin(_, _));
     EXPECT_CALL(wifi, status()).WillRepeatedly(Return(IWifi::Status::NoSsid));
-    EXPECT_CALL(clock, delay(500)).Times(20);
+    EXPECT_CALL(clock, delayMillis(500)).Times(20);
 
     EXPECT_EQ(connector.connect(), ConnectResult::NetworkNotFound);
 }
@@ -63,7 +53,7 @@ TEST_F(WifiConnectorTest, ConnectNetworkNotFound) {
 TEST_F(WifiConnectorTest, ConnectAuthFailed) {
     EXPECT_CALL(wifi, begin(_, _));
     EXPECT_CALL(wifi, status()).WillRepeatedly(Return(IWifi::Status::ConnectFailed));
-    EXPECT_CALL(clock, delay(500)).Times(20);
+    EXPECT_CALL(clock, delayMillis(500)).Times(20);
 
     EXPECT_EQ(connector.connect(), ConnectResult::AuthFailed);
 }
@@ -71,7 +61,7 @@ TEST_F(WifiConnectorTest, ConnectAuthFailed) {
 TEST_F(WifiConnectorTest, ConnectTimeout) {
     EXPECT_CALL(wifi, begin(_, _));
     EXPECT_CALL(wifi, status()).WillRepeatedly(Return(IWifi::Status::Disconnected));
-    EXPECT_CALL(clock, delay(500)).Times(20);
+    EXPECT_CALL(clock, delayMillis(500)).Times(20);
 
     EXPECT_EQ(connector.connect(), ConnectResult::Timeout);
 }

@@ -19,7 +19,7 @@ namespace vigilo {
         constexpr uint32_t retryDelayMs = 500;
 
         for (uint8_t i = 0; i < maxRetries && _wifi.status() != IWifi::Status::Connected; ++i) {
-            _clock.delay(retryDelayMs);
+            _clock.delayMillis(retryDelayMs);
         }
 
         switch (_wifi.status()) {

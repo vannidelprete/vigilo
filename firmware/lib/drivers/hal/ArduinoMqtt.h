@@ -20,8 +20,15 @@ namespace vigilo {
      */
     class ArduinoMqtt : public IMqtt {
     public:
-        /** @brief Constructs the MQTT client with an internal WiFiClient. */
-        ArduinoMqtt() : _client(_wifi) {}
+        /**
+         * @brief Constructs the MQTT client with an internal WiFiClient.
+         * @param bufferSize Maximum MQTT packet size, in bytes. Must be large enough
+         *                   to hold the biggest published payload (batch payloads are
+         *                   the largest, see MqttPublisher::BATCH_PAYLOAD_CAPACITY).
+         */
+        explicit ArduinoMqtt(uint16_t bufferSize) : _client(_wifi) {
+            _client.setBufferSize(bufferSize);
+        }
 
         ArduinoMqtt(const ArduinoMqtt&)            = delete; ///< Non-copyable.
         ArduinoMqtt& operator=(const ArduinoMqtt&) = delete; ///< Non-copyable.
@@ -29,14 +36,20 @@ namespace vigilo {
         ArduinoMqtt& operator=(ArduinoMqtt&&)      = delete; ///< Non-movable.
 
         /** @copydoc IMqtt::connect() */
-        [[nodiscard]] bool connect(const char* clientId, const char* broker, uint16_t port) override {
+        [[nodiscard]] bool connect(const char* clientId, const char* broker, uint16_t port,
+                                   const char* willTopic, const char* willMessage) override {
             _client.setServer(broker, port);
-            return _client.connect(clientId);
+            return _client.connect(clientId, willTopic, 1, true, willMessage);
         }
 
         /** @copydoc IMqtt::publish() */
-        [[nodiscard]] bool publish(const char* topic, const char* payload) override {
-            return _client.publish(topic, payload);
+        [[nodiscard]] bool publish(const char* topic, const char* payload, bool retained) override {
+            return _client.publish(topic, payload, retained);
+        }
+
+        /** @copydoc IMqtt::publishBinary() */
+        [[nodiscard]] bool publishBinary(const char* topic, const uint8_t* payload, std::size_t length) override {
+            return _client.publish(topic, payload, static_cast<unsigned int>(length));
         }
 
         /** @copydoc IMqtt::isConnected() */
