@@ -11,6 +11,9 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ml
     steps:
       - uses: actions/checkout@v5
 
@@ -19,10 +22,12 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install ruff pytest numpy --root-user-action=ignore
+        run: |
+          pip install -r requirements.txt --root-user-action=ignore
+          pip install ruff --root-user-action=ignore
 
       - name: Lint
-        run: ruff check ml/
+        run: ruff check .
 
       - name: Test
-        run: pytest ml/ -v || [ $? -eq 5 ]
+        run: python -m pytest -v || [ $? -eq 5 ]
