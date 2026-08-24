@@ -5,7 +5,6 @@ import json
 import struct
 
 import pytest
-
 from bridge import (
     BATCH_HEADER_FORMAT,
     alert_point,
