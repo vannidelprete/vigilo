@@ -38,7 +38,8 @@ def main() -> None:
     load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
     args = parse_args()
 
-    baseline_rows = list(csv.DictReader(open(args.baseline)))
+    with open(args.baseline) as f:
+        baseline_rows = list(csv.DictReader(f))
     threshold = compute_threshold(snr_at_1x(baseline_rows), args.k)
     print(f"Calibrated threshold ({AXIS} SNR at 1X): {threshold:.2f}")
 

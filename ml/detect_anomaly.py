@@ -28,8 +28,10 @@ def compute_threshold(baseline_snr: np.ndarray, k: float) -> float:
 
 def main() -> None:
     args = parse_args()
-    baseline_rows = list(csv.DictReader(open(args.baseline)))
-    input_rows = list(csv.DictReader(open(args.input)))
+    with open(args.baseline) as f:
+        baseline_rows = list(csv.DictReader(f))
+    with open(args.input) as f:
+        input_rows = list(csv.DictReader(f))
 
     baseline_snr = snr_at_1x(baseline_rows)
     threshold = compute_threshold(baseline_snr, args.k)

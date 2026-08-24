@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 import numpy as np
-
 from helpers import make_sine
+
 from monitor import batch_snr
+
 
 def test_batch_snr_high_for_strong_signal_at_predicted_1x():
     fs_hz = 500.0

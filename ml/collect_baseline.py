@@ -49,7 +49,7 @@ def main() -> None:
 
     topic = f"vigilo/{args.device_id}/telemetry/batch"
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
-    csv_file = open(args.output, "w", newline="")
+    csv_file = open(args.output, "w", newline="")  # noqa: SIM115 - stays open across the MQTT event loop, closed in the finally block below
     writer = csv.writer(csv_file)
     writer.writerow(FIELDNAMES)
 

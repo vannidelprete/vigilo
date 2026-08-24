@@ -94,7 +94,7 @@ def plot_spectrum(batch: dict, fs_hz: float, f_1x: float, output_path: str) -> N
         ax_plot.plot(freqs, magnitude)
         for h, color in zip(HARMONICS, ("r", "g", "orange")):
             ax_plot.axvline(f_1x * h, color=color, linestyle="--", alpha=0.6, label=f"{h}X ({f_1x*h:.1f} Hz)")
-        peak_hz, peak_amp = find_global_peak(freqs, magnitude)
+        peak_hz, _peak_amp = find_global_peak(freqs, magnitude)
         ax_plot.axvline(peak_hz, color="purple", linestyle=":", alpha=0.8, label=f"actual peak ({peak_hz:.1f} Hz)")
         ax_plot.set_ylabel(f"{axis} amplitude")
         ax_plot.legend(loc="upper right", fontsize=8)
