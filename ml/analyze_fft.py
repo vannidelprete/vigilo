@@ -71,6 +71,8 @@ def spectrum(values: list[int], fs_hz: float) -> tuple[np.ndarray, np.ndarray]:
     magnitude[1:-1] *= 2
     return freqs, magnitude
 
+def noise_floor(magnitude: np.ndarray) -> float:
+    return float(np.median(magnitude[1:]))  # exclude DC bin
 
 def find_peak_near(freqs: np.ndarray, magnitude: np.ndarray, target_hz: float, search_bins: int = 1) -> tuple[float, float]:
     center = int(np.argmin(np.abs(freqs - target_hz)))
@@ -92,7 +94,7 @@ def plot_spectrum(batch: dict, fs_hz: float, f_1x: float, output_path: str) -> N
         ax_plot.plot(freqs, magnitude)
         for h, color in zip(HARMONICS, ("r", "g", "orange")):
             ax_plot.axvline(f_1x * h, color=color, linestyle="--", alpha=0.6, label=f"{h}X ({f_1x*h:.1f} Hz)")
-        peak_hz, peak_amp = find_global_peak(freqs, magnitude)
+        peak_hz, _peak_amp = find_global_peak(freqs, magnitude)
         ax_plot.axvline(peak_hz, color="purple", linestyle=":", alpha=0.8, label=f"actual peak ({peak_hz:.1f} Hz)")
         ax_plot.set_ylabel(f"{axis} amplitude")
         ax_plot.legend(loc="upper right", fontsize=8)
@@ -126,7 +128,7 @@ def main() -> None:
             noise_floors = []
             for axis in AXES:
                 freqs, magnitude = spectrum(b[axis], fs_hz)
-                noise_floors.append(float(np.median(magnitude[1:])))  # exclude DC bin
+                noise_floors.append(noise_floor(magnitude))
 
                 peak_hz, peak_amp = find_global_peak(freqs, magnitude)
                 row[f"{axis}_peak_hz"] = round(peak_hz, 2)

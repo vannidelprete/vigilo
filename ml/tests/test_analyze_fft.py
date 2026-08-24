@@ -4,13 +4,10 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from helpers import make_sine
 
 from analyze_fft import find_global_peak, find_peak_near, spectrum
 
-def make_sine(freq_hz: float, amplitude: float, fs_hz: float, n_samples: int, dc_offset: float = 0.0) -> list[int]:
-    t = np.arange(n_samples) / fs_hz
-    signal= dc_offset + amplitude * np.sin(2 * np.pi * freq_hz * t)
-    return signal.astype(int).tolist()
 
 def test_spectrum_recovers_known_frequency_and_amplitude():
     fs_hz = 500.0
@@ -28,7 +25,7 @@ def test_spectrum_recovers_known_frequency_and_amplitude():
 
 def test_spectrum_removes_dc_offset():
     values = make_sine(50.0, 100.0, 500.0, 256, dc_offset=20000)
-    freqs, magnitude = spectrum(values, 500.0)
+    _freqs, magnitude = spectrum(values, 500.0)
     assert magnitude[0] < 5.0  # negligible vs. the 20000 offset and the true amplitude of 100
 
 
