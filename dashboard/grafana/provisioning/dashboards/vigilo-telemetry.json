@@ -34,6 +34,40 @@
           "refId": "A"
         }
       ]
+    },
+    {
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "id": 4,
+      "title": "Vibration SNR",
+      "description": "SNR at the fan's rotational frequency (1X), computed every batch (see #37/#38/#39). Rises before crossing the alert threshold - useful for spotting a developing fault early, not just a confirmed one.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "hide": false,
+          "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"vibration\")\n  |> filter(fn: (r) => r._field == \"snr\")",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "id": 5,
+      "title": "Anomaly Log",
+      "description": "Discrete alert events - fired when Vibration SNR crosses the calibrated threshold (see #39/#40).",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "hide": false,
+          "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"alert\")\n  |> drop(columns: [\"_start\", \"_stop\", \"_measurement\"])\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> sort(columns: [\"_time\"], desc: true)",
+          "refId": "A"
+        }
+      ]
     }
   ],
   "refresh": "10s",
@@ -44,8 +78,8 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "Vigilo - Sensor Node Telemetry",
-  "description": "RPM from the Vigilo ESP32 sensor node, via MQTT and InfluxDB. Vibration analysis runs separately on high-rate batches (see #36).",
+  "description": "RPM, continuous vibration SNR, and anomaly log from the Vigilo ESP32 sensor node, via MQTT and InfluxDB. Full FFT analysis runs separately on high-rate batches (see #36).",
   "uid": "vigilo-telemetry",
-  "version": 3,
+  "version": 6,
   "weekStart": ""
 }

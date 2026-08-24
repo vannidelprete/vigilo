@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import struct
 
 import paho.mqtt.client as mqtt
+import urllib3
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
-import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -18,6 +19,44 @@ logger = logging.getLogger("vigilo-bridge")
 
 BATCH_HEADER_FORMAT = "<IHf"
 BATCH_HEADER_SIZE = struct.calcsize(BATCH_HEADER_FORMAT)
+
+
+def batch_point(device_id: str, payload: bytes) -> Point:
+    sample_interval_us, sample_count, rpm = struct.unpack(BATCH_HEADER_FORMAT, payload[:BATCH_HEADER_SIZE])
+    return (
+        Point("telemetry")
+        .tag("device_id", device_id)
+        .field("rpm", rpm)
+        .field("sample_count", sample_count)
+        .field("sample_interval_us", sample_interval_us)
+    )
+
+
+def status_point(device_id: str, payload: bytes) -> Point:
+    online = payload.decode("utf-8", errors="replace") == "online"
+    return Point("status").tag("device_id", device_id).field("online_flag", 1 if online else 0)
+
+
+def alert_point(device_id: str, payload: bytes) -> Point:
+    data = json.loads(payload)
+    return (
+        Point("alert")
+        .tag("device_id", device_id)
+        .tag("axis", data["axis"])
+        .field("snr", data["snr"])
+        .field("threshold", data["threshold"])
+        .field("rpm", data["rpm"])
+    )
+
+def vibration_point(device_id: str, payload: bytes) -> Point:
+    data = json.loads(payload)
+    return (
+        Point("vibration")
+        .tag("device_id", device_id)
+        .tag("axis", data["axis"])
+        .field("snr", data["snr"])
+        .field("rpm", data["rpm"])
+    )
 
 class Bridge:
     def __init__(
@@ -70,13 +109,17 @@ class Bridge:
         if len(parts) < 2:
             logger.warning("Unexpected topic format: %s", msg.topic)
             return
-        
+
         device_id = parts[1]
 
         if msg.topic.endswith("/telemetry/batch"):
             self._handle_batch(device_id, msg.payload)
+        elif msg.topic.endswith("/telemetry/vibration"):
+            self._handle_vibration(device_id, msg.payload)
         elif msg.topic.endswith("/status"):
             self._handle_status(device_id, msg.payload)
+        elif msg.topic.endswith("/alert"):
+            self._handle_alert(device_id, msg.payload)
         else:
             logger.debug("Ignoring unhandled topic: %s", msg.topic)
 
@@ -84,22 +127,27 @@ class Bridge:
         if len(payload) < BATCH_HEADER_SIZE:
             logger.warning("Batch payload too short from %s: %d bytes", device_id, len(payload))
             return
-        
-        sample_interval_us, sample_count, rpm = struct.unpack(BATCH_HEADER_FORMAT, payload[:BATCH_HEADER_SIZE])
-
-        point = (
-            Point("telemetry")
-            .tag("device_id", device_id)
-            .field("rpm", rpm)
-            .field("sample_count", sample_count)
-            .field("sample_interval_us", sample_interval_us)
-        )
-        self._write_api.write(bucket=self._bucket, record=point)
+        self._write_api.write(bucket=self._bucket, record=batch_point(device_id, payload))
 
     def _handle_status(self, device_id: str, payload: bytes) -> None:
-        online = payload.decode("utf-8", errors="replace") == "online"
-        point = Point("status").tag("device_id", device_id).field("online_flag", 1 if online else 0)
+        self._write_api.write(bucket=self._bucket, record=status_point(device_id, payload))
+
+    def _handle_alert(self, device_id: str, payload: bytes) -> None:
+        try:
+            point = alert_point(device_id, payload)
+        except (json.JSONDecodeError, KeyError):
+            logger.warning("Malformed alert payload from %s", device_id)
+            return
         self._write_api.write(bucket=self._bucket, record=point)
+
+    def _handle_vibration(self, device_id: str, payload: bytes) -> None:
+        try:
+            point = vibration_point(device_id, payload)
+        except (json.JSONDecodeError, KeyError):
+            logger.warning("Malformed vibration payload from %s", device_id)
+            return
+        self._write_api.write(bucket=self._bucket, record=point)
+
 
 def main() -> None:
     bridge = Bridge(
