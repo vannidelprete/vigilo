@@ -6,11 +6,7 @@ import numpy as np
 import pytest
 
 from analyze_fft import find_global_peak, find_peak_near, spectrum
-
-def make_sine(freq_hz: float, amplitude: float, fs_hz: float, n_samples: int, dc_offset: float = 0.0) -> list[int]:
-    t = np.arange(n_samples) / fs_hz
-    signal= dc_offset + amplitude * np.sin(2 * np.pi * freq_hz * t)
-    return signal.astype(int).tolist()
+from helpers import make_sine
 
 def test_spectrum_recovers_known_frequency_and_amplitude():
     fs_hz = 500.0

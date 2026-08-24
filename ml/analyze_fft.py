@@ -71,6 +71,8 @@ def spectrum(values: list[int], fs_hz: float) -> tuple[np.ndarray, np.ndarray]:
     magnitude[1:-1] *= 2
     return freqs, magnitude
 
+def noise_floor(magnitude: np.ndarray) -> float:
+    return float(np.median(magnitude[1:]))  # exclude DC bin
 
 def find_peak_near(freqs: np.ndarray, magnitude: np.ndarray, target_hz: float, search_bins: int = 1) -> tuple[float, float]:
     center = int(np.argmin(np.abs(freqs - target_hz)))
@@ -126,7 +128,7 @@ def main() -> None:
             noise_floors = []
             for axis in AXES:
                 freqs, magnitude = spectrum(b[axis], fs_hz)
-                noise_floors.append(float(np.median(magnitude[1:])))  # exclude DC bin
+                noise_floors.append(noise_floor(magnitude))
 
                 peak_hz, peak_amp = find_global_peak(freqs, magnitude)
                 row[f"{axis}_peak_hz"] = round(peak_hz, 2)
