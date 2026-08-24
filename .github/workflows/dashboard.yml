@@ -26,3 +26,11 @@ jobs:
 
       - name: Lint Python bridge
         run: ruff check dashboard/
+      
+      - name: Install bridge test dependencies
+        working-directory: dashboard/bridge
+        run: pip install -r requirements.txt --root-user-action=ignore
+
+      - name: Test bridge
+        working-directory: dashboard/bridge
+        run: python -m pytest -v

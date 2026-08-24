@@ -27,7 +27,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def batch_snr(samples: list[tuple[int, int, int, int, int]], fs_hz: float, rpm: float) -> float:
+def batch_snr(samples: list[tuple[int, int, int, int, int, int]], fs_hz: float, rpm: float) -> float:
     values = [s[AXIS_INDEX[AXIS]] for s in samples]
     freqs, magnitude = spectrum(values, fs_hz)
     _, amp = find_peak_near(freqs, magnitude, rpm / 60)
@@ -44,13 +44,14 @@ def main() -> None:
     print(f"Calibrated threshold ({AXIS} SNR at 1X): {threshold:.2f}")
 
     batch_topic = f"vigilo/{args.device_id}/telemetry/batch"
+    vibration_topic = f"vigilo/{args.device_id}/telemetry/vibration"
     alert_topic = f"vigilo/{args.device_id}/alert"
 
     def on_connect(client: mqtt.Client, userdata, flags, reason_code, properties=None) -> None:
         if reason_code != 0:
             print(f"MQTT connection failed: {reason_code}")
             return
-        print(f"Connected. Subscribed to {batch_topic}, alerting on {alert_topic}")
+        print(f"Connected. Subscribed to {batch_topic}, publishing vibration to {vibration_topic}, alerting on {alert_topic}")
         client.subscribe(batch_topic)
 
     def on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> None:
@@ -65,15 +66,11 @@ def main() -> None:
         verdict = "ANOMALY" if snr > threshold else "ok"
         print(f"rpm={rpm:.1f}  snr={snr:.2f}  {verdict}")
 
+        reading = {"device_id": args.device_id, "axis": AXIS, "snr": round(snr, 2), "rpm": round(rpm, 1)}
+        client.publish(vibration_topic, json.dumps(reading))
+
         if snr > threshold:
-            alert = json.dumps({
-                "device_id": args.device_id,
-                "axis": AXIS,
-                "snr": round(snr, 2),
-                "threshold": round(threshold, 2),
-                "rpm": round(rpm, 1),
-            })
-            client.publish(alert_topic, alert)
+            client.publish(alert_topic, json.dumps({**reading, "threshold": round(threshold, 2)}))
 
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.on_connect = on_connect
