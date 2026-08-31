@@ -9,7 +9,11 @@ import struct
 from datetime import datetime, timedelta, timezone
 
 import paho.mqtt.client as mqtt
-from dotenv import load_dotenv
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
 
 BATCH_HEADER_FORMAT = "<IHf"
 BATCH_HEADER_SIZE = struct.calcsize(BATCH_HEADER_FORMAT)
@@ -44,7 +48,8 @@ def decode_batch(payload: bytes) -> tuple[int, float, list[tuple[int, int, int, 
 
 
 def main() -> None:
-    load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+    if load_dotenv is not None:
+        load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
     args = parse_args()
 
     topic = f"vigilo/{args.device_id}/telemetry/batch"

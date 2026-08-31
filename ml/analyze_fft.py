@@ -24,7 +24,6 @@ import argparse
 import csv
 from collections import defaultdict
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 AXES = ("ax", "ay", "az")
@@ -88,6 +87,8 @@ def find_global_peak(freqs: np.ndarray, magnitude: np.ndarray, min_hz: float = M
 
 
 def plot_spectrum(batch: dict, fs_hz: float, f_1x: float, output_path: str) -> None:
+    import matplotlib.pyplot as plt
+    
     fig, axs = plt.subplots(len(AXES), 1, figsize=(10, 8), sharex=True)
     for ax_plot, axis in zip(axs, AXES):
         freqs, magnitude = spectrum(batch[axis], fs_hz)

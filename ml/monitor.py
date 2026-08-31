@@ -10,7 +10,11 @@ import json
 import os
 
 import paho.mqtt.client as mqtt
-from dotenv import load_dotenv
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
 
 from analyze_fft import find_peak_near, noise_floor, spectrum
 from collect_baseline import BATCH_HEADER_SIZE, decode_batch
@@ -35,7 +39,8 @@ def batch_snr(samples: list[tuple[int, int, int, int, int, int]], fs_hz: float, 
 
 
 def main() -> None:
-    load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+    if load_dotenv is not None:
+        load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
     args = parse_args()
 
     with open(args.baseline) as f:
