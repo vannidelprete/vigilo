@@ -29,6 +29,9 @@ namespace vigilo {
         constexpr uint32_t      BATCH_INTERVAL_MS           = 30000UL;      ///< Period between batch capture cycles.
         constexpr uint16_t      MQTT_BUFFER_SIZE            = 4096;         ///< PubSubClient buffer size, sized for a full batch payload.
 
+        constexpr const char*   MDNS_SERVICE_TYPE           = "mqtt";       ///< mDNS service type queried for broker discovery (without leading underscore).
+        constexpr const char*   MDNS_PROTOCOL               = "tcp";        ///< mDNS protocol queried for broker discovery (without leading underscore).
+    
     } // namespace config
 
 } // namespace vigilo

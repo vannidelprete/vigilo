@@ -29,19 +29,19 @@ namespace vigilo {
     }
 
     bool MqttPublisher::connect() {
-    if (_mqtt.isConnected()) return true;
+        if (_mqtt.isConnected()) return true;
 
-    const uint32_t now = _clock.millis();
-    if (_hasAttempted && (now - _lastAttemptMs < _reconnectIntervalMs)) return false;
+        const uint32_t now = _clock.millis();
+        if (_hasAttempted && (now - _lastAttemptMs < _reconnectIntervalMs)) return false;
 
-    _hasAttempted  = true;
-    _lastAttemptMs = now;
+        _hasAttempted  = true;
+        _lastAttemptMs = now;
 
-    if (!_mqtt.connect(_deviceId, _broker, _port, _statusTopic, WILL_MESSAGE)) return false;
+        if (!_mqtt.connect(_deviceId, _broker, _port, _statusTopic, WILL_MESSAGE)) return false;
 
-    (void)_mqtt.publish(_statusTopic, ONLINE_MESSAGE, true);
-    return true;
-}
+        (void)_mqtt.publish(_statusTopic, ONLINE_MESSAGE, true);
+        return true;
+    }
 
     bool MqttPublisher::isConnected() const noexcept {
         return _mqtt.isConnected();

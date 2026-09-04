@@ -62,6 +62,11 @@ namespace vigilo {
             _client.loop();
         }
 
+        /** @copydoc IMqtt::lastError() */
+        [[nodiscard]] int lastError() const noexcept override {
+            return _client.state();
+        }
+
     private:
         WiFiClient              _wifi;   ///< Underlying TCP socket provided to PubSubClient.
         mutable PubSubClient    _client; ///< PubSubClient instance wrapping the WiFiClient.

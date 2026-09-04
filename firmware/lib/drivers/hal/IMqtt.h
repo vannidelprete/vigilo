@@ -58,6 +58,14 @@ namespace vigilo {
          * Must be called regularly from the main loop.
          */
         virtual void loop() noexcept = 0;
+
+        /**
+         * @brief Returns the implementation-defined error code from the last failed connect() attempt.
+         *
+         * @return A non-zero code identifying the failure reason. Meaning is implementation-specific
+         *         (see the concrete implementation's documentation); intended for diagnostic logging only.
+         */
+        [[nodiscard]] virtual int lastError() const noexcept = 0;
     };
 
 } // namespace vigilo
