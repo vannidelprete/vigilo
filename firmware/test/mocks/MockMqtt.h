@@ -12,8 +12,9 @@
 class MockMqtt : public vigilo::IMqtt {
 public:
     MOCK_METHOD(bool, connect,       (const char*, const char*, uint16_t, const char*, const char*), (override));
-    MOCK_METHOD(bool, publish,       (const char*, const char*, bool),      (override));
-    MOCK_METHOD(bool, publishBinary, (const char*, const uint8_t*, size_t), (override));
-    MOCK_METHOD(bool, isConnected,   (),                                    (const, noexcept, override));
-    MOCK_METHOD(void, loop,          (),                                    (noexcept, override));
+    MOCK_METHOD(bool, publish,       (const char*, const char*, bool),                               (override));
+    MOCK_METHOD(bool, publishBinary, (const char*, const uint8_t*, size_t),                          (override));
+    MOCK_METHOD(bool, isConnected,   (),                                                             (const, noexcept, override));
+    MOCK_METHOD(void, loop,          (),                                                             (noexcept, override));
+    MOCK_METHOD(int,  lastError,     (),                                                             (const, noexcept, override));
 };
