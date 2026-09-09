@@ -37,9 +37,10 @@ namespace vigilo {
 
         /** @copydoc IMqtt::connect() */
         [[nodiscard]] bool connect(const char* clientId, const char* broker, uint16_t port,
+                                   const char* username, const char* password,
                                    const char* willTopic, const char* willMessage) override {
             _client.setServer(broker, port);
-            return _client.connect(clientId, willTopic, 1, true, willMessage);
+            return _client.connect(clientId, username, password, willTopic, 1, true, willMessage);
         }
 
         /** @copydoc IMqtt::publish() */

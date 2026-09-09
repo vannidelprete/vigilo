@@ -20,11 +20,14 @@ namespace vigilo {
          * @param clientId  Unique client identifier string.
          * @param broker    Broker hostname or IP address.
          * @param port      Broker TCP port.
+         * @param username  MQTT username.
+         * @param password  MQTT password.
          * @param willTopic   Topic the broker publishes the will message to.
          * @param willMessage Message the broker publishes on unexpected disconnect. 
          * @return true on success, false on failure.
          */
         [[nodiscard]] virtual bool connect(const char* clientId, const char* broker, uint16_t port,
+                                           const char* username, const char* password,
                                            const char* willTopic, const char* willMessage) = 0;
 
         /**

@@ -22,45 +22,48 @@ protected:
     static constexpr const char* BROKER               = "192.168.1.13";
     static constexpr uint16_t    PORT                 = 1883;
     static constexpr const char* DEVICE_ID             = "vigilo-01";
+    static constexpr const char* USERNAME              = "vigilo-01";
+    static constexpr const char* PASSWORD              = "test-password";
     static constexpr const char* EXPECTED_STATUS_TOPIC = "vigilo/vigilo-01/status";
     static constexpr const char* EXPECTED_BATCH_TOPIC  = "vigilo/vigilo-01/telemetry/batch";
     static constexpr uint32_t    RECONNECT_INTERVAL_MS = 5000;
 
     MockMqtt      mqtt;
     MockClock     clock;
-    MqttPublisher publisher{BROKER, PORT, DEVICE_ID, mqtt, clock, RECONNECT_INTERVAL_MS};
+    MqttPublisher publisher{BROKER, PORT, DEVICE_ID, USERNAME, PASSWORD, mqtt, clock, RECONNECT_INTERVAL_MS};
 
     void SetUp() override {
         ON_CALL(clock, millis()).WillByDefault(Return(0));
         ON_CALL(mqtt, isConnected()).WillByDefault(Return(false));
-        ON_CALL(mqtt, connect(_, _, _, _, _)).WillByDefault(Return(true));
+        ON_CALL(mqtt, connect(_, _, _, _, _, _, _)).WillByDefault(Return(true));
         ON_CALL(mqtt, publish(_, _, _)).WillByDefault(Return(true));
     }
 };
 
 TEST_F(MqttPublisherTest, ConnectPassesCredentialsAndWillToMqtt) {
     EXPECT_CALL(mqtt, connect(StrEq(DEVICE_ID), StrEq(BROKER), PORT,
+                               StrEq(USERNAME), StrEq(PASSWORD),
                                StrEq(EXPECTED_STATUS_TOPIC), StrEq("offline")))
         .WillOnce(Return(true));
     ASSERT_TRUE(publisher.connect());
 }
 
 TEST_F(MqttPublisherTest, ConnectPublishesRetainedOnlineStatusOnSuccess) {
-    EXPECT_CALL(mqtt, connect(_, _, _, _, _)).WillOnce(Return(true));
+    EXPECT_CALL(mqtt, connect(_, _, _, _, _, _, _)).WillOnce(Return(true));
     EXPECT_CALL(mqtt, publish(StrEq(EXPECTED_STATUS_TOPIC), StrEq("online"), true))
         .WillOnce(Return(true));
     ASSERT_TRUE(publisher.connect());
 }
 
 TEST_F(MqttPublisherTest, ConnectReturnsFalseOnFailure) {
-    EXPECT_CALL(mqtt, connect(_, _, _, _, _)).WillOnce(Return(false));
+    EXPECT_CALL(mqtt, connect(_, _, _, _, _, _, _)).WillOnce(Return(false));
     EXPECT_CALL(mqtt, publish(_, _, _)).Times(0);
     ASSERT_FALSE(publisher.connect());
 }
 
 TEST_F(MqttPublisherTest, ConnectReturnsTrueWhenAlreadyConnected) {
     EXPECT_CALL(mqtt, isConnected()).WillOnce(Return(true));
-    EXPECT_CALL(mqtt, connect(_, _, _, _, _)).Times(0);
+    EXPECT_CALL(mqtt, connect(_, _, _, _, _, _, _)).Times(0);
     ASSERT_TRUE(publisher.connect());
 }
 
@@ -68,7 +71,7 @@ TEST_F(MqttPublisherTest, ConnectThrottlesSecondAttemptWithinInterval) {
     EXPECT_CALL(clock, millis())
         .WillOnce(Return(0))
         .WillOnce(Return(RECONNECT_INTERVAL_MS - 1));
-    EXPECT_CALL(mqtt, connect(_, _, _, _, _)).Times(1).WillOnce(Return(true));
+    EXPECT_CALL(mqtt, connect(_, _, _, _, _, _, _)).Times(1).WillOnce(Return(true));
 
     ASSERT_TRUE(publisher.connect());
     ASSERT_FALSE(publisher.connect());
@@ -78,7 +81,7 @@ TEST_F(MqttPublisherTest, ConnectAttemptsAgainAfterIntervalElapsed) {
     EXPECT_CALL(clock, millis())
         .WillOnce(Return(0))
         .WillOnce(Return(RECONNECT_INTERVAL_MS));
-    EXPECT_CALL(mqtt, connect(_, _, _, _, _)).Times(2).WillRepeatedly(Return(true));
+    EXPECT_CALL(mqtt, connect(_, _, _, _, _, _, _)).Times(2).WillRepeatedly(Return(true));
 
     ASSERT_TRUE(publisher.connect());
     ASSERT_TRUE(publisher.connect());

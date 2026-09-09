@@ -80,6 +80,7 @@ def main() -> None:
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.on_connect = on_connect
     client.on_message = on_message
+    client.username_pw_set(os.environ["MQTT_USERNAME"], os.environ["MQTT_PASSWORD"])
     client.connect(os.environ["MQTT_BROKER"], int(os.environ.get("MQTT_PORT", "1883")))
 
     try:
