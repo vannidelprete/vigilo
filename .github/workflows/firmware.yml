@@ -53,6 +53,8 @@ jobs:
           echo '#define WIFI_SSID "ci-placeholder"' >> firmware/include/secrets.h
           echo '#define WIFI_PASSWORD "ci-placeholder"' >> firmware/include/secrets.h
           echo '#define MQTT_BROKER "ci-placeholder"' >> firmware/include/secrets.h
+          echo '#define MQTT_USERNAME "ci-placeholder"' >> firmware/include/secrets.h
+          echo '#define MQTT_PASSWORD "ci-placeholder"' >> firmware/include/secrets.h
       - name: Build firmware
         run: platformio run
         working-directory: firmware

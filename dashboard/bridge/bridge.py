@@ -63,6 +63,8 @@ class Bridge:
             self,
             mqtt_broker: str,
             mqtt_port: int,
+            mqtt_username: str,
+            mqtt_password: str,
             mqtt_topic: str,
             influxdb_url: str,
             influxdb_token: str,
@@ -80,6 +82,7 @@ class Bridge:
         self._write_api = self._influx_client.write_api(write_options=SYNCHRONOUS)
 
         self._mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+        self._mqtt_client.username_pw_set(mqtt_username, mqtt_password)
         self._mqtt_client.on_connect = self._on_connect
         self._mqtt_client.on_disconnect = self._on_disconnect
         self._mqtt_client.on_message = self._on_message
@@ -153,6 +156,8 @@ def main() -> None:
     bridge = Bridge(
         mqtt_broker=os.environ["MQTT_BROKER"],
         mqtt_port=int(os.environ.get("MQTT_PORT", "1883")),
+        mqtt_username=os.environ["MQTT_USERNAME"],
+        mqtt_password=os.environ["MQTT_PASSWORD"],
         mqtt_topic=os.environ.get("MQTT_TOPIC", "vigilo/+/telemetry"),
         influxdb_url=os.environ["INFLUXDB_URL"],
         influxdb_token=os.environ["INFLUXDB_TOKEN"],

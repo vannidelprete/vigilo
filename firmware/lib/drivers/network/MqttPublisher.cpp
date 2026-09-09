@@ -20,9 +20,11 @@ namespace {
 namespace vigilo {
     
     MqttPublisher::MqttPublisher(const char* broker, uint16_t port, const char* deviceId,
-                                  IMqtt& mqtt, IClock& clock, uint32_t reconnectIntervalMs)
-        : _broker(broker), _port(port), _deviceId(deviceId),
-          _mqtt(mqtt), _clock(clock), _reconnectIntervalMs(reconnectIntervalMs)
+                                 const char* username, const char* password, IMqtt& mqtt,
+                                 IClock& clock, uint32_t reconnectIntervalMs)
+        : _broker(broker), _port(port), _deviceId(deviceId), 
+          _username(username), _password(password), _mqtt(mqtt),
+          _clock(clock), _reconnectIntervalMs(reconnectIntervalMs)
     {
         snprintf(_statusTopic, sizeof(_statusTopic), STATUS_TOPIC_FORMAT, _deviceId);
         snprintf(_batchTopic, sizeof(_batchTopic), BATCH_TOPIC_FORMAT, _deviceId);
@@ -37,7 +39,7 @@ namespace vigilo {
         _hasAttempted  = true;
         _lastAttemptMs = now;
 
-        if (!_mqtt.connect(_deviceId, _broker, _port, _statusTopic, WILL_MESSAGE)) return false;
+        if (!_mqtt.connect(_deviceId, _broker, _port, _username, _password, _statusTopic, WILL_MESSAGE)) return false;
 
         (void)_mqtt.publish(_statusTopic, ONLINE_MESSAGE, true);
         return true;

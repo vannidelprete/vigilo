@@ -57,11 +57,14 @@ namespace vigilo {
          * @param port                  Broker TCP port.
          * @param deviceId              Unique device identifier used as the MQTT client ID and
          *                              embedded in the topics. Must outlive this object.
+         * @param username              MQTT username. Must outlive this object.
+         * @param password              MQTT password. Must outlive this object.
          * @param mqtt                  Injected MQTT interface.
          * @param clock                 Injected timing interface, used to throttle reconnect attempts.
          * @param reconnectIntervalMs   Minimum time between reconnect() attempts, in milliseconds.
          */
-        explicit MqttPublisher(const char* broker, uint16_t port, const char* deviceId, IMqtt& mqtt,
+        explicit MqttPublisher(const char* broker, uint16_t port, const char* deviceId,
+                               const char* username, const char* password, IMqtt& mqtt,
                                IClock& clock, uint32_t reconnectIntervalMs);
 
         MqttPublisher(const MqttPublisher&)            = delete; ///< Non-copyable.
@@ -124,6 +127,8 @@ namespace vigilo {
         const char* _broker;                               ///< Broker address pointer (not owned).
         uint16_t    _port;                                 ///< Broker TCP port.
         const char* _deviceId;                              ///< Device identifier pointer (not owned).
+        const char* _username;                              ///< MQTT username pointer (not owned).
+        const char* _password;                              ///< MQTT password pointer (not owned).
         IMqtt&      _mqtt;                                  ///< Injected MQTT interface.
         IClock&     _clock;                                 ///< Injected timing interface.
         uint32_t    _reconnectIntervalMs;                   ///< Minimum interval between attempts after the first.

@@ -40,6 +40,7 @@ namespace {
     vigilo::WifiConnector       g_wifi(WIFI_SSID, WIFI_PASSWORD, g_wifi_hal, g_clock);
     vigilo::MqttDiscovery       g_discovery(g_mdns_hal);
     vigilo::MqttPublisher       g_publisher(g_brokerAddress, vigilo::config::MQTT_PORT, vigilo::config::MQTT_DEVICE_ID,
+                                            MQTT_USERNAME, MQTT_PASSWORD,
                                             g_mqtt_hal, g_clock, vigilo::config::MQTT_RECONNECT_INTERVAL_MS);
 
     uint32_t g_lastBatchMs = 0;
